@@ -47,3 +47,43 @@ The player should think:
 - Why was it denied?
 - Who denied it?
 - What is Q really trying to reach?
+
+## Objective Design
+
+Objectives are never presented as game tasks.
+
+Objectives are presented as protocol requirements.
+
+Bad:
+
+Collect 5 Fragments
+
+Good:
+
+Stabilize 5 Fragments
+
+Bad:
+
+Reach the Exit
+
+Good:
+
+Locate Exit Node
+
+Bad:
+
+Open the Door
+
+Good:
+
+Authorize Access Gate
+
+Observer Introduction Principle
+
+The Observer must first be inferred.
+
+Only later should it be perceived.
+
+Only much later should it be seen.
+
+The player should suspect the Observer before learning its existence.

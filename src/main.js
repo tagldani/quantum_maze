@@ -28,6 +28,16 @@ let quantumScore = 0;
 let cycleCount = 1;
 const maxCycles = 3;
 let protocolMessage = "";
+let protocolMessageTimer = 0;
+
+const fragmentProtocolMessages = [
+    "SIGNAL RECEIVED",
+    "FRAGMENT ABSORBED",
+    "MEMORY TRACE DETECTED",
+    "Q IS LEARNING",
+    "OBSERVER LINK STABLE"
+];
+const objectiveText = "STABILIZE 5 FRAGMENTS";
 let resonanceTimer = 0;
 
 let resonanceX = 0;
@@ -82,10 +92,14 @@ function checkCollection() {
 
             quantumScore++;
 
-            resonanceTimer = 15;
+const randomIndex = Math.floor(Math.random() * fragmentProtocolMessages.length);
+protocolMessage = fragmentProtocolMessages[randomIndex];
+protocolMessageTimer = 90;
 
-            resonanceX = fragment.x;
-            resonanceY = fragment.y;
+resonanceTimer = 15;
+
+resonanceX = fragment.x;
+resonanceY = fragment.y;
 
         }
 
@@ -112,7 +126,11 @@ function checkCycleComplete() {
 
     } else {
 
-        protocolMessage = "PATTERN RECOGNITION: STABLE";
+        protocolMessage =
+`PATTERN RECOGNITION: STABLE`;
+setTimeout(() => {
+    protocolMessage = "TRANSFER DENIED";
+}, 1200);
     }
 
 }
@@ -214,50 +232,87 @@ if (resonanceTimer > 0) {
     ctx.shadowBlur = 0;
 }
 
+function drawText(text, x, y, size = 18, color = "white") {
+    ctx.font = `${size}px monospace`;
+    ctx.fillStyle = color;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = color;
+    ctx.fillText(text, x, y);
+    ctx.shadowBlur = 0;
+}
+
+function drawDashedLine(x, y, length, color) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 6]);
+
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + length, y);
+    ctx.stroke();
+
+    ctx.setLineDash([]);
+}
+
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     updateQ();
     checkCollection();
-checkCycleComplete();
-   drawFragments();
+    checkCycleComplete();
+
+    drawFragments();
     drawResonance();
 
-    ctx.fillStyle = "white";
-    ctx.font = "20px Arial";
+    const blink = Math.floor(Date.now() / 500) % 2 === 0;
 
-    ctx.fillText(
-        `Q ${quantumScore}`,
-        20,
-        40
-    );
-
-ctx.font = "16px Arial";
-ctx.fillStyle = "#ffaa33";
-
-ctx.fillText(
-    `CYCLE ${cycleCount}/${maxCycles}`,
-    20,
-    70
-);
-
-if (protocolMessage) {
-
-    ctx.font = "18px Arial";
-    ctx.fillStyle = "#ffaa33";
-
-    ctx.fillText(
-        protocolMessage,
-        20,
-        110
-    );
-
+    if (protocolMessageTimer > 0) {
+    protocolMessageTimer--;
+} else if (
+    protocolMessage !== `CYCLE ${cycleCount} INITIALIZED` &&
+    protocolMessage !== "PATTERN RECOGNITION: STABLE" &&
+    protocolMessage !== "TRANSFER DENIED"
+) {
+    protocolMessage = "";
 }
 
+    drawText(`Q ${quantumScore}`, 20, 40, 24, "#bffaff");
+    drawDashedLine(20, 58, 150, "#00d4ff");
 
+    drawText(`CYCLE ${cycleCount}/${maxCycles}`, 20, 95, 18, "#ffaa33");
+    drawDashedLine(20, 115, 260, "#ffaa33");
 
+    drawText("OBJECTIVE:", 20, 155, 16, "#bffaff");
 
+    drawText(
+        `> ${objectiveText}${blink ? "_" : ""}`,
+        20,
+        190,
+        20,
+        "#00d4ff"
+    );
 
+    if (protocolMessage) {
+        drawDashedLine(20, canvas.height - 140, canvas.width - 40, "#ffaa33");
+
+        drawText(
+            protocolMessage,
+            40,
+            canvas.height - 100,
+            20,
+            "#ffaa33"
+        );
+
+        drawText(
+            `> ${protocolMessage === "TRANSFER DENIED" ? "TRANSFER DENIED" : "..."}${blink ? "_" : ""}`,
+            40,
+            canvas.height - 60,
+            26,
+            "#ffaa33"
+        );
+
+        drawDashedLine(20, canvas.height - 35, canvas.width - 40, "#ffaa33");
+    }
 
     drawQ();
 
