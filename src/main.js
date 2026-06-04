@@ -22,8 +22,12 @@ const q = {
 
 const fragment = {
     x: window.innerWidth / 2 + 120,
-    y: window.innerHeight / 2
+    y: window.innerHeight / 2,
+    collected: false
 };
+
+let quantumScore = 0;
+let resonanceTimer = 0;
 
 canvas.addEventListener("click", (event) => {
     q.targetX = event.clientX;
@@ -58,8 +62,26 @@ function updateQ() {
         q.vy *= 0.5;
     }
 }
+function checkCollection() {
 
+    if (fragment.collected) return;
+
+    const dx = q.x - fragment.x;
+    const dy = q.y - fragment.y;
+
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance < q.radius + 8) {
+
+        fragment.collected = true;
+
+        quantumScore++;
+
+        resonanceTimer = 15;
+    }
+}
 function drawFragment() {
+   if (fragment.collected) return;
     ctx.shadowBlur = 12;
     ctx.shadowColor = "#00d4ff";
 
@@ -82,7 +104,14 @@ function drawFragment() {
 
 function drawQ() {
     const time = Date.now() * 0.003;
-    const radius = q.radius + Math.sin(time) * 2;
+    let radius = q.radius + Math.sin(time) * 2;
+
+if (resonanceTimer > 0) {
+
+    radius += 4;
+
+    resonanceTimer--;
+}
 
     ctx.shadowBlur = 24;
     ctx.shadowColor = "white";
@@ -108,9 +137,17 @@ function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     updateQ();
-
+checkCollection();
     drawFragment();
 
+    ctx.fillStyle = "white";
+ctx.font = "20px Arial";
+
+ctx.fillText(
+    `Q ${quantumScore}`,
+    20,
+    40
+);
     drawQ();
 
     requestAnimationFrame(draw);

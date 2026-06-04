@@ -23,3 +23,17 @@ L'eventuale rivelazione dovrà essere lenta, progressiva e coerente con il tema 
 Domanda associata:
 
 "Q è davvero ciò che sembra?"
+
+Long-Term Seed 002
+
+Fragment Resonance Principle
+
+I frammenti non vengono assorbiti.
+
+La Q entra in risonanza con essi.
+
+Il loro significato reale non deve essere immediatamente comprensibile.
+
+Il giocatore deve chiedersi:
+
+"Cosa sto realmente raccogliendo?"
