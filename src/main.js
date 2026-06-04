@@ -29,6 +29,8 @@ const fragment = {
 let quantumScore = 0;
 let resonanceTimer = 0;
 
+let resonanceX = 0;
+let resonanceY = 0;
 canvas.addEventListener("click", (event) => {
     q.targetX = event.clientX;
     q.targetY = event.clientY;
@@ -78,6 +80,9 @@ function checkCollection() {
         quantumScore++;
 
         resonanceTimer = 15;
+resonanceX = fragment.x;
+resonanceY = fragment.y;
+
     }
 }
 function drawFragment() {
@@ -101,7 +106,28 @@ function drawFragment() {
 
     ctx.shadowBlur = 0;
 }
+function drawResonance() {
 
+    if (resonanceTimer <= 0) return;
+
+    const progress = resonanceTimer / 15;
+    const radius = 30 * (1 - progress);
+
+    ctx.strokeStyle = `rgba(0, 212, 255, ${progress})`;
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+
+    ctx.arc(
+        resonanceX,
+        resonanceY,
+        radius,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.stroke();
+}
 function drawQ() {
     const time = Date.now() * 0.003;
     let radius = q.radius + Math.sin(time) * 2;
@@ -137,17 +163,20 @@ function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     updateQ();
-checkCollection();
+    checkCollection();
+
     drawFragment();
+    drawResonance();
 
     ctx.fillStyle = "white";
-ctx.font = "20px Arial";
+    ctx.font = "20px Arial";
 
-ctx.fillText(
-    `Q ${quantumScore}`,
-    20,
-    40
-);
+    ctx.fillText(
+        `Q ${quantumScore}`,
+        20,
+        40
+    );
+
     drawQ();
 
     requestAnimationFrame(draw);
