@@ -21,7 +21,11 @@ const q = {
 };
 
 const fragments = [];
-
+const observer = {
+    x: 80,
+    y: window.innerHeight - 190,
+    pulse: 0
+};
 spawnFragments();
 
 let quantumScore = 0;
@@ -254,6 +258,22 @@ function drawDashedLine(x, y, length, color) {
     ctx.setLineDash([]);
 }
 
+
+function drawObserver() {
+    observer.pulse += 0.04;
+
+    const alpha = 0.45 + Math.sin(observer.pulse) * 0.25;
+
+    ctx.font = "26px monospace";
+    ctx.fillStyle = `rgba(255, 170, 51, ${alpha})`;
+    ctx.shadowBlur = 14;
+    ctx.shadowColor = "#ffaa33";
+
+    ctx.fillText(">...", observer.x, observer.y);
+
+    ctx.shadowBlur = 0;
+}
+
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -263,7 +283,7 @@ function draw() {
 
     drawFragments();
     drawResonance();
-
+drawObserver();
     const blink = Math.floor(Date.now() / 500) % 2 === 0;
 
     if (protocolMessageTimer > 0) {
