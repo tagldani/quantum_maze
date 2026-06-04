@@ -22,17 +22,12 @@ const q = {
 
 const fragments = [];
 
-for (let i = 0; i < 5; i++) {
-
-    fragments.push({
-        x: Math.random() * (window.innerWidth - 100) + 50,
-        y: Math.random() * (window.innerHeight - 100) + 50,
-        collected: false
-    });
-
-}
+spawnFragments();
 
 let quantumScore = 0;
+let cycleCount = 1;
+const maxCycles = 3;
+let protocolMessage = "";
 let resonanceTimer = 0;
 
 let resonanceX = 0;
@@ -97,6 +92,31 @@ function checkCollection() {
     });
 
 }
+
+function checkCycleComplete() {
+
+    const allCollected = fragments.every(fragment => fragment.collected);
+
+    if (!allCollected) return;
+
+    if (cycleCount < maxCycles) {
+
+        cycleCount++;
+
+        protocolMessage = `CYCLE ${cycleCount} INITIALIZED`;
+
+        setTimeout(() => {
+            protocolMessage = "";
+            spawnFragments();
+        }, 700);
+
+    } else {
+
+        protocolMessage = "PATTERN RECOGNITION: STABLE";
+    }
+
+}
+
 function drawFragments() {
 
     fragments.forEach(fragment => {
@@ -123,6 +143,23 @@ function drawFragments() {
     });
 
     ctx.shadowBlur = 0;
+}
+
+
+function spawnFragments() {
+
+    fragments.length = 0;
+
+    for (let i = 0; i < 5; i++) {
+
+        fragments.push({
+            x: Math.random() * (window.innerWidth - 100) + 50,
+            y: Math.random() * (window.innerHeight - 100) + 50,
+            collected: false
+        });
+
+    }
+
 }
 function drawResonance() {
 
@@ -182,7 +219,7 @@ function draw() {
 
     updateQ();
     checkCollection();
-
+checkCycleComplete();
    drawFragments();
     drawResonance();
 
@@ -194,6 +231,33 @@ function draw() {
         20,
         40
     );
+
+ctx.font = "16px Arial";
+ctx.fillStyle = "#ffaa33";
+
+ctx.fillText(
+    `CYCLE ${cycleCount}/${maxCycles}`,
+    20,
+    70
+);
+
+if (protocolMessage) {
+
+    ctx.font = "18px Arial";
+    ctx.fillStyle = "#ffaa33";
+
+    ctx.fillText(
+        protocolMessage,
+        20,
+        110
+    );
+
+}
+
+
+
+
+
 
     drawQ();
 
