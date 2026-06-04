@@ -33,6 +33,10 @@ const observer = {
     reactionCooldown: 0,
     desyncTimer: 0
 };
+let memoryTraceTriggered = false;
+let memoryTraceActive = false;
+let memoryTraceStep = 0;
+let memoryTraceTimer = 0;
 spawnFragments();
 
 let quantumScore = 0;
@@ -284,16 +288,60 @@ function triggerObserverDesync() {
     observer.desyncTimer = 45;
     observer.reactionCooldown = 180;
 
+    if (!memoryTraceTriggered) {
+
+    startMemoryTrace();
+
+} else {
+
     protocolMessage = "OBSERVER DESYNC";
     protocolMessageTimer = 75;
-
+}
     observer.x += (Math.random() - 0.5) * 120;
     observer.y += (Math.random() - 0.5) * 120;
+}
+
+function startMemoryTrace() {
+
+    if (memoryTraceTriggered) return;
+
+    memoryTraceTriggered = true;
+
+    memoryTraceActive = true;
+
+    memoryTraceStep = 0;
+
+    memoryTraceTimer = 40;
+
+    protocolMessage = "MEMORY TRACE:";
+    protocolMessageTimer = 240;
 }
 function drawObserver() {
     if (!observer.emerged && !observer.emerging) return;
 
     observer.pulse += 0.04;
+
+    if (memoryTraceActive) {
+
+    memoryTraceTimer--;
+
+    if (memoryTraceTimer <= 0) {
+
+        memoryTraceStep++;
+
+        memoryTraceTimer = 40;
+
+        if (memoryTraceStep > 4) {
+
+            memoryTraceActive = false;
+
+            observer.x -= 120;
+            observer.y -= 80;
+
+            protocolMessage = "";
+        }
+    }
+}
 if (observer.reactionCooldown > 0) {
     observer.reactionCooldown--;
 }
@@ -335,10 +383,22 @@ if (observer.emerged) {
     const alpha = 0.45 + Math.sin(observer.pulse) * 0.25;
 
     ctx.font = "26px monospace";
-    ctx.fillStyle = `rgba(255, 170, 51, ${alpha})`;
-    ctx.shadowBlur = 14;
-    ctx.shadowColor = "#ffaa33";
+    const mergeMoment =
+    memoryTraceActive &&
+    memoryTraceStep === 4;
 
+if (mergeMoment) {
+
+    ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+    ctx.shadowColor = "white";
+
+} else {
+
+    ctx.fillStyle = `rgba(255, 170, 51, ${alpha})`;
+    ctx.shadowColor = "#ffaa33";
+}
+
+ctx.shadowBlur = 14;
     const distanceFromQ = Math.hypot(q.x - observer.x, q.y - observer.y);
 
 const observerText = observer.desyncTimer > 0
@@ -347,7 +407,26 @@ const observerText = observer.desyncTimer > 0
         ? ">.."
         : ">...";
 
-ctx.fillText(observerText, observer.x, observer.y);
+let displayText = observerText;
+
+if (memoryTraceActive) {
+
+    const states = [
+        ">...Q",
+        ">..Q.",
+        ">.Q..",
+        ">Q...",
+        ">Q"
+    ];
+
+    displayText = states[Math.min(memoryTraceStep, states.length - 1)];
+}
+
+ctx.fillText(
+    displayText,
+    observer.x,
+    observer.y
+);
 
     ctx.shadowBlur = 0;
 }
