@@ -29,7 +29,9 @@ const observer = {
     pulse: 0,
     emerging: false,
     emerged: false,
-    followStrength: 0.012
+    followStrength: 0.012,
+    reactionCooldown: 0,
+    desyncTimer: 0
 };
 spawnFragments();
 
@@ -276,11 +278,29 @@ function triggerObserverEmergence() {
 
     observer.emerging = true;
 }
+function triggerObserverDesync() {
+    if (observer.reactionCooldown > 0) return;
+
+    observer.desyncTimer = 45;
+    observer.reactionCooldown = 180;
+
+    protocolMessage = "OBSERVER DESYNC";
+    protocolMessageTimer = 75;
+
+    observer.x += (Math.random() - 0.5) * 120;
+    observer.y += (Math.random() - 0.5) * 120;
+}
 function drawObserver() {
     if (!observer.emerged && !observer.emerging) return;
 
     observer.pulse += 0.04;
+if (observer.reactionCooldown > 0) {
+    observer.reactionCooldown--;
+}
 
+if (observer.desyncTimer > 0) {
+    observer.desyncTimer--;
+}
     if (observer.emerging) {
         const dx = observer.targetX - observer.x;
         const dy = observer.targetY - observer.y;
@@ -296,11 +316,21 @@ function drawObserver() {
         }
     }
 if (observer.emerged) {
+    const distanceFromQ = Math.hypot(q.x - observer.x, q.y - observer.y);
+
+    if (distanceFromQ < 70) {
+        triggerObserverDesync();
+    }
+
     const desiredX = q.x - 90;
     const desiredY = q.y - 70;
 
-    observer.x += (desiredX - observer.x) * observer.followStrength;
-    observer.y += (desiredY - observer.y) * observer.followStrength;
+    const strength = observer.desyncTimer > 0
+        ? observer.followStrength * 0.25
+        : observer.followStrength;
+
+    observer.x += (desiredX - observer.x) * strength;
+    observer.y += (desiredY - observer.y) * strength;
 }
     const alpha = 0.45 + Math.sin(observer.pulse) * 0.25;
 
@@ -311,7 +341,11 @@ if (observer.emerged) {
 
     const distanceFromQ = Math.hypot(q.x - observer.x, q.y - observer.y);
 
-const observerText = distanceFromQ < 120 ? ">.." : ">...";
+const observerText = observer.desyncTimer > 0
+    ? ">-."
+    : distanceFromQ < 120
+        ? ">.."
+        : ">...";
 
 ctx.fillText(observerText, observer.x, observer.y);
 
