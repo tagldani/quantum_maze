@@ -28,7 +28,8 @@ const observer = {
     targetY: window.innerHeight - 190,
     pulse: 0,
     emerging: false,
-    emerged: false
+    emerged: false,
+    followStrength: 0.012
 };
 spawnFragments();
 
@@ -294,7 +295,13 @@ function drawObserver() {
             observer.emerged = true;
         }
     }
+if (observer.emerged) {
+    const desiredX = q.x - 90;
+    const desiredY = q.y - 70;
 
+    observer.x += (desiredX - observer.x) * observer.followStrength;
+    observer.y += (desiredY - observer.y) * observer.followStrength;
+}
     const alpha = 0.45 + Math.sin(observer.pulse) * 0.25;
 
     ctx.font = "26px monospace";
@@ -302,7 +309,11 @@ function drawObserver() {
     ctx.shadowBlur = 14;
     ctx.shadowColor = "#ffaa33";
 
-    ctx.fillText(">...", observer.x, observer.y);
+    const distanceFromQ = Math.hypot(q.x - observer.x, q.y - observer.y);
+
+const observerText = distanceFromQ < 120 ? ">.." : ">...";
+
+ctx.fillText(observerText, observer.x, observer.y);
 
     ctx.shadowBlur = 0;
 }
