@@ -23,8 +23,12 @@ const q = {
 const fragments = [];
 const observer = {
     x: 80,
-    y: window.innerHeight - 190,
-    pulse: 0
+    y: window.innerHeight - 60,
+    targetX: 80,
+    targetY: window.innerHeight - 190,
+    pulse: 0,
+    emerging: false,
+    emerged: false
 };
 spawnFragments();
 
@@ -120,7 +124,9 @@ function checkCycleComplete() {
     if (cycleCount < maxCycles) {
 
         cycleCount++;
-
+if (cycleCount === 2) {
+    triggerObserverEmergence();
+}
         protocolMessage = `CYCLE ${cycleCount} INITIALIZED`;
 
         setTimeout(() => {
@@ -258,9 +264,36 @@ function drawDashedLine(x, y, length, color) {
     ctx.setLineDash([]);
 }
 
+function triggerObserverEmergence() {
+    if (observer.emerged || observer.emerging) return;
 
+    observer.x = 80;
+    observer.y = window.innerHeight - 60;
+
+    observer.targetX = 80;
+    observer.targetY = window.innerHeight - 190;
+
+    observer.emerging = true;
+}
 function drawObserver() {
+    if (!observer.emerged && !observer.emerging) return;
+
     observer.pulse += 0.04;
+
+    if (observer.emerging) {
+        const dx = observer.targetX - observer.x;
+        const dy = observer.targetY - observer.y;
+
+        observer.x += dx * 0.035;
+        observer.y += dy * 0.035;
+
+        if (Math.abs(dx) < 1 && Math.abs(dy) < 1) {
+            observer.x = observer.targetX;
+            observer.y = observer.targetY;
+            observer.emerging = false;
+            observer.emerged = true;
+        }
+    }
 
     const alpha = 0.45 + Math.sin(observer.pulse) * 0.25;
 
@@ -273,7 +306,6 @@ function drawObserver() {
 
     ctx.shadowBlur = 0;
 }
-
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -323,13 +355,15 @@ drawObserver();
             "#ffaa33"
         );
 
-        drawText(
-            `> ${protocolMessage === "TRANSFER DENIED" ? "TRANSFER DENIED" : "..."}${blink ? "_" : ""}`,
-            40,
-            canvas.height - 60,
-            26,
-            "#ffaa33"
-        );
+       if (!observer.emerged && !observer.emerging) {
+    drawText(
+        `> ${protocolMessage === "TRANSFER DENIED" ? "TRANSFER DENIED" : "..."}${blink ? "_" : ""}`,
+        40,
+        canvas.height - 60,
+        26,
+        "#ffaa33"
+    );
+}
 
         drawDashedLine(20, canvas.height - 35, canvas.width - 40, "#ffaa33");
     }

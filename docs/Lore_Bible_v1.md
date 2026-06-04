@@ -37,3 +37,19 @@ Il loro significato reale non deve essere immediatamente comprensibile.
 Il giocatore deve chiedersi:
 
 "Cosa sto realmente raccogliendo?"
+
+
+Questo crea un ricordo visivo forte.
+
+E soprattutto è coerente con una regola che abbiamo implicitamente costruito in Quantum Maze:
+
+> ogni elemento importante deve prima essere percepito, poi spiegato.
+
+Il giocatore vede l'Observer muoversi.
+
+Solo molto più avanti capirà cosa significa.
+
+Io questo step lo chiamerei:
+
+```text
+Observer Emergence
