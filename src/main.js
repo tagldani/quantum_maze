@@ -20,11 +20,17 @@ const q = {
     radius: 20
 };
 
-const fragment = {
-    x: window.innerWidth / 2 + 120,
-    y: window.innerHeight / 2,
-    collected: false
-};
+const fragments = [];
+
+for (let i = 0; i < 5; i++) {
+
+    fragments.push({
+        x: Math.random() * (window.innerWidth - 100) + 50,
+        y: Math.random() * (window.innerHeight - 100) + 50,
+        collected: false
+    });
+
+}
 
 let quantumScore = 0;
 let resonanceTimer = 0;
@@ -66,43 +72,55 @@ function updateQ() {
 }
 function checkCollection() {
 
-    if (fragment.collected) return;
+    fragments.forEach(fragment => {
 
-    const dx = q.x - fragment.x;
-    const dy = q.y - fragment.y;
+        if (fragment.collected) return;
 
-    const distance = Math.sqrt(dx * dx + dy * dy);
+        const dx = q.x - fragment.x;
+        const dy = q.y - fragment.y;
 
-    if (distance < q.radius + 8) {
+        const distance = Math.sqrt(dx * dx + dy * dy);
 
-        fragment.collected = true;
+        if (distance < q.radius + 8) {
 
-        quantumScore++;
+            fragment.collected = true;
 
-        resonanceTimer = 15;
-resonanceX = fragment.x;
-resonanceY = fragment.y;
+            quantumScore++;
 
-    }
+            resonanceTimer = 15;
+
+            resonanceX = fragment.x;
+            resonanceY = fragment.y;
+
+        }
+
+    });
+
 }
-function drawFragment() {
-   if (fragment.collected) return;
-    ctx.shadowBlur = 12;
-    ctx.shadowColor = "#00d4ff";
+function drawFragments() {
 
-    ctx.fillStyle = "#00d4ff";
+    fragments.forEach(fragment => {
 
-    ctx.beginPath();
+        if (fragment.collected) return;
 
-    ctx.arc(
-        fragment.x,
-        fragment.y,
-        8,
-        0,
-        Math.PI * 2
-    );
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = "#00d4ff";
 
-    ctx.fill();
+        ctx.fillStyle = "#00d4ff";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            fragment.x,
+            fragment.y,
+            8,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+    });
 
     ctx.shadowBlur = 0;
 }
@@ -165,7 +183,7 @@ function draw() {
     updateQ();
     checkCollection();
 
-    drawFragment();
+   drawFragments();
     drawResonance();
 
     ctx.fillStyle = "white";
