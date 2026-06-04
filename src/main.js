@@ -37,6 +37,7 @@ let memoryTraceTriggered = false;
 let memoryTraceActive = false;
 let memoryTraceStep = 0;
 let memoryTraceTimer = 0;
+let echoTimer = 0;
 spawnFragments();
 
 let quantumScore = 0;
@@ -434,6 +435,20 @@ function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     updateQ();
+    if (memoryTraceTriggered) {
+
+    if (echoTimer <= 0 && Math.random() < 0.0008) {
+
+        protocolMessage = "ECHO PRESENT";
+        protocolMessageTimer = 120;
+
+        echoTimer = 600;
+    }
+
+    if (echoTimer > 0) {
+        echoTimer--;
+    }
+}
     checkCollection();
     checkCycleComplete();
 
