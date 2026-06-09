@@ -1,5 +1,9 @@
 import { fragmentProtocolMessages } from "../core/state.js";
-import { triggerObserverDesync, startMemoryTrace } from "../entities/observer.js";
+import {
+    triggerObserverDesync,
+    triggerObserverSignal,
+    startMemoryTrace
+} from "../entities/observer.js";
 import { playCollectSound } from "../systems/audio.js";
 
 function getFragmentMessage(fragment) {
@@ -10,6 +14,15 @@ function getFragmentMessage(fragment) {
 
     const randomIndex = Math.floor(Math.random() * fragmentProtocolMessages.length);
     return fragmentProtocolMessages[randomIndex];
+}
+
+function getFragmentObserverSignal(fragment) {
+    if (fragment.type === "normal") return ">...";
+    if (fragment.type === "unstable") return ">. .";
+    if (fragment.type === "hidden") return ">-. .";
+    if (fragment.type === "echo") return ">>.";
+
+    return ">...";
 }
 
 export function checkCollection(q, fragments, state, observer) {
@@ -29,18 +42,22 @@ export function checkCollection(q, fragments, state, observer) {
             state.resonanceX = fragment.x;
             state.resonanceY = fragment.y;
 
+            triggerObserverSignal(observer, getFragmentObserverSignal(fragment), 80);
+
             // play feedback sound
             try { playCollectSound(fragment); } catch (e) { /* ignore if audio fails */ }
 
             if (fragment.effect === "desync") {
                 triggerObserverDesync(observer, state);
+                triggerObserverSignal(observer, getFragmentObserverSignal(fragment), 90);
             }
 
             if (fragment.effect === "echo") {
-    startMemoryTrace(state);
-    state.protocolMessage = "MEMORY TRACE ACTIVE";
-    state.protocolMessageTimer = 140;
-}
+                startMemoryTrace(state);
+                state.protocolMessage = "MEMORY TRACE ACTIVE";
+                state.protocolMessageTimer = 140;
+                triggerObserverSignal(observer, getFragmentObserverSignal(fragment), 90);
+            }
         }
     });
 }
