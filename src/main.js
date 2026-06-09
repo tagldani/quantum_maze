@@ -1,3 +1,5 @@
+import { playCollectSound, resumeAudio } from "./systems/audio.js";
+
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -61,6 +63,7 @@ let resonanceY = 0;
 canvas.addEventListener("click", (event) => {
     q.targetX = event.clientX;
     q.targetY = event.clientY;
+    void resumeAudio();
 });
 
 canvas.addEventListener("touchstart", (event) => {
@@ -68,6 +71,7 @@ canvas.addEventListener("touchstart", (event) => {
 
     q.targetX = touch.clientX;
     q.targetY = touch.clientY;
+    void resumeAudio();
 });
 
 function updateQ() {
@@ -109,6 +113,7 @@ function checkCollection() {
             const randomIndex = Math.floor(Math.random() * fragmentProtocolMessages.length);
             protocolMessage = fragmentProtocolMessages[randomIndex];
             protocolMessageTimer = 90;
+            void playCollectSound(fragment).catch(() => {});
 
             resonanceTimer = 15;
             resonanceX = fragment.x;
@@ -143,6 +148,25 @@ function checkCycleComplete() {
         setTimeout(() => {
             protocolMessage = "TRANSFER DENIED";
         }, 1200);
+    }
+}
+
+function drawBackground() {
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, "#04070f");
+    gradient.addColorStop(1, "#01030a");
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.strokeStyle = "rgba(0, 212, 255, 0.04)";
+    ctx.lineWidth = 1;
+
+    for (let y = 0; y < canvas.height; y += 60) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
     }
 }
 
@@ -390,6 +414,7 @@ function drawObserver() {
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawBackground();
 
     updateQ();
     checkCollection();
