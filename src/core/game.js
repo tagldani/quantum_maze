@@ -91,12 +91,14 @@ export function createGame(canvas) {
         ctx.font = "18px monospace";
         ctx.fillStyle = "#e6fbff";
         ctx.fillText("Collect fragments, stabilize the cycle, and stay in sync.", canvas.width / 2, canvas.height / 2 - 30);
-        ctx.fillText("Click or touch to start. Press Space to pause.", canvas.width / 2, canvas.height / 2 + 10);
+        ctx.fillText("Click or touch to start.", canvas.width / 2, canvas.height / 2 + 10);
 
         ctx.fillStyle = "#ffaa33";
         ctx.font = "16px monospace";
-        ctx.fillText("Objective: stabilize 5 fragments", canvas.width / 2, canvas.height / 2 + 55);
-        ctx.fillText("Press any key to begin", canvas.width / 2, canvas.height / 2 + 95);
+        ctx.fillText("Quick tutorial:", canvas.width / 2, canvas.height / 2 + 55);
+        ctx.fillText("1. Click/touch to move Q", canvas.width / 2, canvas.height / 2 + 85);
+        ctx.fillText("2. Collect fragments to trigger effects", canvas.width / 2, canvas.height / 2 + 110);
+        ctx.fillText("3. Press Space to pause at any time", canvas.width / 2, canvas.height / 2 + 135);
 
         ctx.textAlign = "left";
     }
