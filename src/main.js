@@ -37,12 +37,12 @@ let memoryTraceTriggered = false;
 let memoryTraceActive = false;
 let memoryTraceStep = 0;
 let memoryTraceTimer = 0;
-let echoTimer = 0;
 spawnFragments();
 
 let quantumScore = 0;
 let cycleCount = 1;
 const maxCycles = 3;
+let cycleTransitioning = false;
 let protocolMessage = "";
 let protocolMessageTimer = 0;
 
@@ -91,10 +91,9 @@ function updateQ() {
         q.vy *= 0.5;
     }
 }
+
 function checkCollection() {
-
     fragments.forEach(fragment => {
-
         if (fragment.collected) return;
 
         const dx = q.x - fragment.x;
@@ -103,102 +102,92 @@ function checkCollection() {
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance < q.radius + 8) {
-
             fragment.collected = true;
 
             quantumScore++;
 
-const randomIndex = Math.floor(Math.random() * fragmentProtocolMessages.length);
-protocolMessage = fragmentProtocolMessages[randomIndex];
-protocolMessageTimer = 90;
+            const randomIndex = Math.floor(Math.random() * fragmentProtocolMessages.length);
+            protocolMessage = fragmentProtocolMessages[randomIndex];
+            protocolMessageTimer = 90;
 
-resonanceTimer = 15;
-
-resonanceX = fragment.x;
-resonanceY = fragment.y;
-
+            resonanceTimer = 15;
+            resonanceX = fragment.x;
+            resonanceY = fragment.y;
         }
-
     });
-
 }
 
 function checkCycleComplete() {
-
     const allCollected = fragments.every(fragment => fragment.collected);
 
-    if (!allCollected) return;
+    if (!allCollected || cycleTransitioning) return;
+
+    cycleTransitioning = true;
 
     if (cycleCount < maxCycles) {
-
         cycleCount++;
-if (cycleCount === 2) {
-    triggerObserverEmergence();
-}
+
+        if (cycleCount === 2) {
+            triggerObserverEmergence();
+        }
+
         protocolMessage = `CYCLE ${cycleCount} INITIALIZED`;
 
         setTimeout(() => {
+            cycleTransitioning = false;
             protocolMessage = "";
             spawnFragments();
         }, 700);
-
     } else {
-
-        protocolMessage =
-`PATTERN RECOGNITION: STABLE`;
-setTimeout(() => {
-    protocolMessage = "TRANSFER DENIED";
-}, 1200);
+        protocolMessage = "PATTERN RECOGNITION: STABLE";
+        setTimeout(() => {
+            protocolMessage = "TRANSFER DENIED";
+        }, 1200);
     }
-
 }
 
 function drawFragments() {
+    const time = Date.now() * 0.002;
 
     fragments.forEach(fragment => {
-
         if (fragment.collected) return;
 
-        ctx.shadowBlur = 12;
-        ctx.shadowColor = "#00d4ff";
-
-        ctx.fillStyle = "#00d4ff";
+        const pulse = 0.7 + Math.sin(time + fragment.pulse) * 0.25;
+        const radius = fragment.size + pulse * 1.5;
 
         ctx.beginPath();
+        ctx.strokeStyle = `rgba(0, 212, 255, ${0.18 + pulse * 0.25})`;
+        ctx.lineWidth = 1.5;
+        ctx.arc(fragment.x, fragment.y, radius + 4, 0, Math.PI * 2);
+        ctx.stroke();
 
-        ctx.arc(
-            fragment.x,
-            fragment.y,
-            8,
-            0,
-            Math.PI * 2
-        );
+        ctx.shadowBlur = 14;
+        ctx.shadowColor = "#00d4ff";
+        ctx.fillStyle = `rgba(0, 212, 255, ${0.85 + pulse * 0.1})`;
 
+        ctx.beginPath();
+        ctx.arc(fragment.x, fragment.y, radius, 0, Math.PI * 2);
         ctx.fill();
-
     });
 
     ctx.shadowBlur = 0;
 }
 
-
 function spawnFragments() {
-
     fragments.length = 0;
 
     for (let i = 0; i < 5; i++) {
-
         fragments.push({
             x: Math.random() * (window.innerWidth - 100) + 50,
             y: Math.random() * (window.innerHeight - 100) + 50,
-            collected: false
+            collected: false,
+            pulse: Math.random() * Math.PI * 2,
+            size: 6 + Math.random() * 2
         });
-
     }
-
 }
-function drawResonance() {
 
+function drawResonance() {
     if (resonanceTimer <= 0) return;
 
     const progress = resonanceTimer / 15;
@@ -208,43 +197,31 @@ function drawResonance() {
     ctx.lineWidth = 2;
 
     ctx.beginPath();
-
-    ctx.arc(
-        resonanceX,
-        resonanceY,
-        radius,
-        0,
-        Math.PI * 2
-    );
-
+    ctx.arc(resonanceX, resonanceY, radius, 0, Math.PI * 2);
     ctx.stroke();
 }
+
 function drawQ() {
     const time = Date.now() * 0.003;
     let radius = q.radius + Math.sin(time) * 2;
 
-if (resonanceTimer > 0) {
+    if (resonanceTimer > 0) {
+        radius += 4;
+        resonanceTimer--;
+    }
 
-    radius += 4;
-
-    resonanceTimer--;
-}
+    ctx.beginPath();
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.18)";
+    ctx.lineWidth = 2;
+    ctx.arc(q.x, q.y, radius + 8, 0, Math.PI * 2);
+    ctx.stroke();
 
     ctx.shadowBlur = 24;
     ctx.shadowColor = "white";
-
     ctx.fillStyle = "white";
 
     ctx.beginPath();
-
-    ctx.arc(
-        q.x,
-        q.y,
-        radius,
-        0,
-        Math.PI * 2
-    );
-
+    ctx.arc(q.x, q.y, radius, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.shadowBlur = 0;
@@ -277,12 +254,11 @@ function triggerObserverEmergence() {
 
     observer.x = 80;
     observer.y = window.innerHeight - 60;
-
     observer.targetX = 80;
     observer.targetY = window.innerHeight - 190;
-
     observer.emerging = true;
 }
+
 function triggerObserverDesync() {
     if (observer.reactionCooldown > 0) return;
 
@@ -290,66 +266,56 @@ function triggerObserverDesync() {
     observer.reactionCooldown = 180;
 
     if (!memoryTraceTriggered) {
+        startMemoryTrace();
+    } else {
+        protocolMessage = "OBSERVER DESYNC";
+        protocolMessageTimer = 75;
+    }
 
-    startMemoryTrace();
-
-} else {
-
-    protocolMessage = "OBSERVER DESYNC";
-    protocolMessageTimer = 75;
-}
     observer.x += (Math.random() - 0.5) * 120;
     observer.y += (Math.random() - 0.5) * 120;
 }
 
 function startMemoryTrace() {
-
     if (memoryTraceTriggered) return;
 
     memoryTraceTriggered = true;
-
     memoryTraceActive = true;
-
     memoryTraceStep = 0;
-
     memoryTraceTimer = 40;
-
     protocolMessage = "MEMORY TRACE:";
     protocolMessageTimer = 240;
 }
+
 function drawObserver() {
     if (!observer.emerged && !observer.emerging) return;
 
     observer.pulse += 0.04;
 
     if (memoryTraceActive) {
+        memoryTraceTimer--;
 
-    memoryTraceTimer--;
+        if (memoryTraceTimer <= 0) {
+            memoryTraceStep++;
+            memoryTraceTimer = 40;
 
-    if (memoryTraceTimer <= 0) {
-
-        memoryTraceStep++;
-
-        memoryTraceTimer = 40;
-
-        if (memoryTraceStep > 4) {
-
-            memoryTraceActive = false;
-
-            observer.x -= 120;
-            observer.y -= 80;
-
-            protocolMessage = "";
+            if (memoryTraceStep > 4) {
+                memoryTraceActive = false;
+                observer.x -= 120;
+                observer.y -= 80;
+                protocolMessage = "";
+            }
         }
     }
-}
-if (observer.reactionCooldown > 0) {
-    observer.reactionCooldown--;
-}
 
-if (observer.desyncTimer > 0) {
-    observer.desyncTimer--;
-}
+    if (observer.reactionCooldown > 0) {
+        observer.reactionCooldown--;
+    }
+
+    if (observer.desyncTimer > 0) {
+        observer.desyncTimer--;
+    }
+
     if (observer.emerging) {
         const dx = observer.targetX - observer.x;
         const dy = observer.targetY - observer.y;
@@ -364,108 +330,86 @@ if (observer.desyncTimer > 0) {
             observer.emerged = true;
         }
     }
-if (observer.emerged) {
-    const distanceFromQ = Math.hypot(q.x - observer.x, q.y - observer.y);
 
-    if (distanceFromQ < 70) {
-        triggerObserverDesync();
+    if (observer.emerged) {
+        const distanceFromQ = Math.hypot(q.x - observer.x, q.y - observer.y);
+
+        if (distanceFromQ < 70) {
+            triggerObserverDesync();
+        }
+
+        const desiredX = q.x - 90;
+        const desiredY = q.y - 70;
+        const strength = observer.desyncTimer > 0
+            ? observer.followStrength * 0.25
+            : observer.followStrength;
+
+        observer.x += (desiredX - observer.x) * strength;
+        observer.y += (desiredY - observer.y) * strength;
     }
 
-    const desiredX = q.x - 90;
-    const desiredY = q.y - 70;
-
-    const strength = observer.desyncTimer > 0
-        ? observer.followStrength * 0.25
-        : observer.followStrength;
-
-    observer.x += (desiredX - observer.x) * strength;
-    observer.y += (desiredY - observer.y) * strength;
-}
     const alpha = 0.45 + Math.sin(observer.pulse) * 0.25;
 
     ctx.font = "26px monospace";
-    const mergeMoment =
-    memoryTraceActive &&
-    memoryTraceStep === 4;
+    const mergeMoment = memoryTraceActive && memoryTraceStep === 4;
 
-if (mergeMoment) {
+    if (mergeMoment) {
+        ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+        ctx.shadowColor = "white";
+    } else {
+        ctx.fillStyle = `rgba(255, 170, 51, ${alpha})`;
+        ctx.shadowColor = "#ffaa33";
+    }
 
-    ctx.fillStyle = `rgba(255,255,255,${alpha})`;
-    ctx.shadowColor = "white";
-
-} else {
-
-    ctx.fillStyle = `rgba(255, 170, 51, ${alpha})`;
-    ctx.shadowColor = "#ffaa33";
-}
-
-ctx.shadowBlur = 14;
+    ctx.shadowBlur = 14;
     const distanceFromQ = Math.hypot(q.x - observer.x, q.y - observer.y);
 
-const observerText = observer.desyncTimer > 0
-    ? ">-."
-    : distanceFromQ < 120
-        ? ">.."
-        : ">...";
+    const observerText = observer.desyncTimer > 0
+        ? ">-."
+        : distanceFromQ < 120
+            ? ">.."
+            : ">...";
 
-let displayText = observerText;
+    let displayText = observerText;
 
-if (memoryTraceActive) {
+    if (memoryTraceActive) {
+        const states = [
+            ">...Q",
+            ">..Q.",
+            ">.Q..",
+            ">Q...",
+            ">Q"
+        ];
 
-    const states = [
-        ">...Q",
-        ">..Q.",
-        ">.Q..",
-        ">Q...",
-        ">Q"
-    ];
+        displayText = states[Math.min(memoryTraceStep, states.length - 1)];
+    }
 
-    displayText = states[Math.min(memoryTraceStep, states.length - 1)];
-}
-
-ctx.fillText(
-    displayText,
-    observer.x,
-    observer.y
-);
-
+    ctx.fillText(displayText, observer.x, observer.y);
     ctx.shadowBlur = 0;
 }
+
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     updateQ();
-    if (memoryTraceTriggered) {
-
-    if (echoTimer <= 0 && Math.random() < 0.0008) {
-
-        protocolMessage = "ECHO PRESENT";
-        protocolMessageTimer = 120;
-
-        echoTimer = 600;
-    }
-
-    if (echoTimer > 0) {
-        echoTimer--;
-    }
-}
     checkCollection();
     checkCycleComplete();
 
     drawFragments();
     drawResonance();
-drawObserver();
+    drawObserver();
+
     const blink = Math.floor(Date.now() / 500) % 2 === 0;
 
     if (protocolMessageTimer > 0) {
-    protocolMessageTimer--;
-} else if (
-    protocolMessage !== `CYCLE ${cycleCount} INITIALIZED` &&
-    protocolMessage !== "PATTERN RECOGNITION: STABLE" &&
-    protocolMessage !== "TRANSFER DENIED"
-) {
-    protocolMessage = "";
-}
+        protocolMessageTimer--;
+    } else if (
+        protocolMessage !== `CYCLE ${cycleCount} INITIALIZED` &&
+        protocolMessage !== "PATTERN RECOGNITION: STABLE" &&
+        protocolMessage !== "TRANSFER DENIED"
+    ) {
+        protocolMessage = "";
+    }
 
     drawText(`Q ${quantumScore}`, 20, 40, 24, "#bffaff");
     drawDashedLine(20, 58, 150, "#00d4ff");
@@ -474,35 +418,21 @@ drawObserver();
     drawDashedLine(20, 115, 260, "#ffaa33");
 
     drawText("OBJECTIVE:", 20, 155, 16, "#bffaff");
-
-    drawText(
-        `> ${objectiveText}${blink ? "_" : ""}`,
-        20,
-        190,
-        20,
-        "#00d4ff"
-    );
+    drawText(`> ${objectiveText}${blink ? "_" : ""}`, 20, 190, 20, "#00d4ff");
 
     if (protocolMessage) {
         drawDashedLine(20, canvas.height - 140, canvas.width - 40, "#ffaa33");
+        drawText(protocolMessage, 40, canvas.height - 100, 20, "#ffaa33");
 
-        drawText(
-            protocolMessage,
-            40,
-            canvas.height - 100,
-            20,
-            "#ffaa33"
-        );
-
-       if (!observer.emerged && !observer.emerging) {
-    drawText(
-        `> ${protocolMessage === "TRANSFER DENIED" ? "TRANSFER DENIED" : "..."}${blink ? "_" : ""}`,
-        40,
-        canvas.height - 60,
-        26,
-        "#ffaa33"
-    );
-}
+        if (!observer.emerged && !observer.emerging) {
+            drawText(
+                `> ${protocolMessage === "TRANSFER DENIED" ? "TRANSFER DENIED" : "..."}${blink ? "_" : ""}`,
+                40,
+                canvas.height - 60,
+                26,
+                "#ffaa33"
+            );
+        }
 
         drawDashedLine(20, canvas.height - 35, canvas.width - 40, "#ffaa33");
     }
