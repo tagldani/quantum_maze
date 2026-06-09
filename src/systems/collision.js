@@ -3,9 +3,10 @@ import { triggerObserverDesync, startMemoryTrace } from "../entities/observer.js
 import { playCollectSound } from "../systems/audio.js";
 
 function getFragmentMessage(fragment) {
-    if (fragment.type === "unstable") return "UNSTABLE FRAGMENT STABILIZED";
-    if (fragment.type === "echo") return "ECHO FRAGMENT SYNCED";
-    if (fragment.type === "visible") return "VISIBLE SIGNAL SECURED";
+    if (fragment.type === "normal") return "TRACE STABLE";
+    if (fragment.type === "unstable") return "PATTERN NOTED";
+    if (fragment.type === "hidden") return "TRACE EXPOSED";
+    if (fragment.type === "echo") return "MEMORY TRACE DETECTED";
 
     const randomIndex = Math.floor(Math.random() * fragmentProtocolMessages.length);
     return fragmentProtocolMessages[randomIndex];
