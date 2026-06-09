@@ -1,0 +1,198 @@
+import { createGameState } from "./state.js";
+import { createQ, updateQ, drawQ } from "../entities/q.js";
+import { createObserver, updateObserver, drawObserver, triggerObserverEmergence } from "../entities/observer.js";
+import { createFragments, drawFragments, spawnFragments } from "../entities/fragment.js";
+import { setupInput } from "../systems/input.js";
+import { checkCollection } from "../systems/collision.js";
+import { checkCycleComplete } from "../systems/mission.js";
+
+export function createGame(canvas) {
+    const ctx = canvas.getContext("2d");
+    const state = createGameState();
+    const q = createQ();
+    const observer = createObserver();
+    const fragments = createFragments();
+
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        q.targetX = Math.min(q.targetX, canvas.width);
+        q.targetY = Math.min(q.targetY, canvas.height);
+        observer.targetX = 80;
+        observer.targetY = canvas.height - 190;
+    }
+
+    resize();
+    spawnFragments(fragments, canvas.width, canvas.height);
+    window.addEventListener("resize", resize);
+    setupInput(canvas, q, state);
+
+    function drawResonance() {
+        if (state.resonanceTimer <= 0) return;
+
+        const progress = state.resonanceTimer / 15;
+        const radius = 30 * (1 - progress);
+
+        ctx.strokeStyle = `rgba(0, 212, 255, ${progress})`;
+        ctx.lineWidth = 2;
+
+        ctx.beginPath();
+        ctx.arc(state.resonanceX, state.resonanceY, radius, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+
+    function drawText(text, x, y, size = 18, color = "white") {
+        ctx.font = `${size}px monospace`;
+        ctx.fillStyle = color;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = color;
+        ctx.fillText(text, x, y);
+        ctx.shadowBlur = 0;
+    }
+
+    function drawDashedLine(x, y, length, color) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 6]);
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + length, y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+    function updateProtocolMessages() {
+        if (state.protocolMessageTimer > 0) {
+            state.protocolMessageTimer--;
+            return;
+        }
+
+        const stickyMessages = [
+            `CYCLE ${state.cycleCount} INITIALIZED`,
+            "PATTERN RECOGNITION: STABLE",
+            "TRANSFER DENIED"
+        ];
+
+        if (!stickyMessages.includes(state.protocolMessage)) {
+            state.protocolMessage = "";
+        }
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // If paused, still render HUD and overlay but skip game updates
+        if (state.paused) {
+            drawFragments(ctx, fragments, q);
+            drawResonance();
+            drawObserver(ctx, observer, q, state);
+            drawHUD();
+            // pause overlay
+            ctx.fillStyle = "rgba(0,0,0,0.6)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "white";
+            ctx.font = "48px monospace";
+            ctx.fillText("PAUSED", canvas.width / 2 - 80, canvas.height / 2);
+            requestAnimationFrame(draw);
+            return;
+        }
+
+        updateQ(q);
+
+        if (state.memoryTraceTriggered) {
+            if (state.echoTimer <= 0 && Math.random() < 0.0008) {
+                state.protocolMessage = "ECHO PRESENT";
+                state.protocolMessageTimer = 120;
+                state.echoTimer = 600;
+            }
+
+            if (state.echoTimer > 0) {
+                state.echoTimer--;
+            }
+        }
+
+        checkCollection(q, fragments, state, observer);
+        checkCycleComplete(fragments, state, observer, spawnFragments);
+
+        drawFragments(ctx, fragments, q);
+        drawResonance();
+        updateObserver(observer, q, state);
+        drawObserver(ctx, observer, q, state);
+
+        const blink = Math.floor(Date.now() / 500) % 2 === 0;
+        updateProtocolMessages();
+
+        drawText(`Q ${state.quantumScore}`, 20, 40, 24, "#bffaff");
+        drawText("R E S O N A N C E", 20, 70, 12, "rgba(191, 250, 255, 0.75)");
+        drawDashedLine(20, 58, 150, "#00d4ff");
+        drawText(`CYCLE ${state.cycleCount}/${state.maxCycles}`, 20, 95, 18, "#ffaa33");
+        drawText("TRACE STATUS: ACTIVE", 20, 125, 12, "rgba(255, 170, 51, 0.8)");
+        drawDashedLine(20, 115, 260, "#ffaa33");
+        drawText("OBJECTIVE:", 20, 155, 16, "#bffaff");
+        drawText(`> ${state.objectiveText}${blink ? "_" : ""}`, 20, 190, 20, "#00d4ff");
+
+        if (state.protocolMessage) {
+            drawDashedLine(20, canvas.height - 140, canvas.width - 40, "#ffaa33");
+            drawText(state.protocolMessage, 40, canvas.height - 100, 20, "#ffaa33");
+
+            if (!observer.emerged && !observer.emerging) {
+                drawText(
+                    `> ${state.protocolMessage === "TRANSFER DENIED" ? "TRANSFER DENIED" : "..."}${blink ? "_" : ""}`,
+                    40,
+                    canvas.height - 60,
+                    26,
+                    "#ffaa33"
+                );
+            }
+
+            drawDashedLine(20, canvas.height - 35, canvas.width - 40, "#ffaa33");
+        }
+
+        drawQ(ctx, q, state);
+        drawHUD();
+        requestAnimationFrame(draw);
+    }
+
+    function drawHUD() {
+        // fragment counts by type
+        const counts = fragments.reduce((acc, f) => {
+            if (f.collected) return acc;
+            acc[f.type] = (acc[f.type] || 0) + 1;
+            return acc;
+        }, {});
+
+        const startX = canvas.width - 220;
+        let y = 40;
+
+        ctx.font = "16px monospace";
+        ctx.fillStyle = "#bffaff";
+        ctx.fillText("Fragments:", startX, y);
+        y += 24;
+
+        const types = ["normal", "unstable", "echo", "hidden"];
+        types.forEach(t => {
+            const c = counts[t] || 0;
+            let color = "#ccc";
+            if (t === "normal") color = "#00d4ff";
+            if (t === "unstable") color = "#ffae00";
+            if (t === "echo") color = "#a4fffb";
+            if (t === "hidden") color = "#22ff88";
+
+            ctx.fillStyle = color;
+            ctx.fillText(`${t}: ${c}`, startX, y);
+            y += 20;
+        });
+
+        // show pause hint
+        ctx.fillStyle = "rgba(255,255,255,0.6)";
+        ctx.font = "12px monospace";
+        ctx.fillText("Press SPACE to Pause/Resume", startX, canvas.height - 30);
+    }
+
+    return {
+        start() {
+            requestAnimationFrame(draw);
+        }
+    };
+}
