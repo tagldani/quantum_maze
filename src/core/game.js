@@ -181,7 +181,7 @@ export function createGame(canvas) {
 
         // If paused, still render HUD and overlay but skip game updates
         if (state.paused) {
-            drawFragments(ctx, fragments, q);
+            drawFragments(ctx, fragments, state);
             drawResonance();
             drawObserver(ctx, observer, q, state);
             drawHUD();
@@ -247,7 +247,7 @@ export function createGame(canvas) {
         checkCollection(q, fragments, state, observer);
         checkCycleComplete(fragments, state, observer, spawnFragments);
 
-        drawFragments(ctx, fragments, q);
+        drawFragments(ctx, fragments, state);
         drawResonance();
         updateObserver(observer, q, state);
         drawObserver(ctx, observer, q, state);

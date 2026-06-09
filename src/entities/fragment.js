@@ -31,14 +31,21 @@ export function spawnFragments(fragments, width, height) {
     }
 }
 
-export function drawFragments(ctx, fragments) {
+export function drawFragments(ctx, fragments, state) {
     const now = performance.now();
+    const cycle = state ? state.cycleCount || 1 : 1;
+    const driftActive = cycle >= 3;
 
     fragments.forEach(fragment => {
         if (fragment.collected) return;
 
-        const driftX = Math.sin(now * fragment.driftSpeed + fragment.drift) * 3;
-        const driftY = Math.cos(now * fragment.driftSpeed * 1.15 + fragment.drift) * 2.5;
+        const prelude = !driftActive ? Math.sin(now * 0.0012 + fragment.drift) * 0.35 : 0;
+        const driftX = driftActive
+            ? Math.sin(now * fragment.driftSpeed + fragment.drift) * 3
+            : prelude;
+        const driftY = driftActive
+            ? Math.cos(now * fragment.driftSpeed * 1.15 + fragment.drift) * 2.5
+            : Math.cos(now * 0.0011 + fragment.drift) * 0.35;
         const x = fragment.x + driftX;
         const y = fragment.y + driftY;
 

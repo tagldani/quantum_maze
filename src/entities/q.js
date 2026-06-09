@@ -27,15 +27,30 @@ export function updateQ(q) {
     q.y += q.vy;
 }
 
-export function drawQ(ctx, q) {
+export function drawQ(ctx, q, state) {
+    const pulse = 1 + 0.08 * Math.sin((performance.now() * 0.003) + q.x * 0.01);
+    const radius = (q.radius || 14) * pulse;
+
     ctx.save();
     ctx.translate(q.x, q.y);
 
-    ctx.shadowBlur = 16;
-    ctx.shadowColor = "#00d4ff";
-    ctx.fillStyle = "#bffaff";
-    ctx.font = "bold 28px monospace";
-    ctx.textAlign = "center";
-    ctx.fillText("Q", 0, 6);
+    ctx.shadowBlur = 18;
+    ctx.shadowColor = "rgba(0, 212, 255, 0.75)";
+    ctx.fillStyle = "rgba(191, 250, 255, 0.95)";
+    ctx.beginPath();
+    ctx.arc(0, 0, radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = state && state.memoryTraceActive ? "rgba(255, 170, 51, 0.9)" : "rgba(0, 212, 255, 0.75)";
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.arc(0, 0, radius + 2, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(2, 6, 23, 0.35)";
+    ctx.beginPath();
+    ctx.arc(-4, -3, radius * 0.28, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
 }
