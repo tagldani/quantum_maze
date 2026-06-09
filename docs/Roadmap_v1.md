@@ -1,3 +1,49 @@
+## Baseline — Quantum Maze Spark Build v0.1
+
+**Status:** Stable baseline  
+**Date:** 2026-06-09  
+**Git tag:** `spark-build-v0.1`  
+**Commit:** `6d9dc5c`
+
+### Consolidated features
+
+- Core canvas runtime active.
+- Initial menu active.
+- Quick tutorial overlay active.
+- Advanced pause overlay active.
+- Q entity restored and functional.
+- Q movement redefined as physical, dense, inertial and non-mechanical.
+- Fragment runtime restored.
+- Fragments spawn correctly.
+- Fragment collection loop active.
+- Cycle progression active.
+- Terrain drift starts at cycle 3.
+
+### Design alignment
+
+This baseline aligns the first playable layer with the Art & Experience Bible, GDD and Lore Bible.
+
+- Q does not move like a generic arcade ball.
+- Q behaves like a contained singularity with mass, inertia and subtle instability.
+- Fragments are part of the discovery loop.
+- The experience remains in the Spark phase: mystery, curiosity, minimal explanation.
+
+### Protected baseline
+
+Do not rewrite or replace this baseline from scratch.
+
+Future development must proceed through small, reversible, testable steps above this version.
+
+### Next planned step
+
+Fragment Resonance v1:
+
+- fragments should not simply disappear when collected;
+- collection should feel like resonance between Q and the fragment;
+- visual/audio/text feedback should remain minimal and coherent with the Spark phase.
+
+
+
 # Quantum Maze — Roadmap
 
 ## Prossimo miglioramento proposto
