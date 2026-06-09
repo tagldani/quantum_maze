@@ -37,9 +37,10 @@ export function checkCollection(q, fragments, state, observer) {
             }
 
             if (fragment.effect === "echo") {
-                startMemoryTrace(state);
-                state.protocolMessage = "ECHO TRACE ACTIVE";
-            }
+    startMemoryTrace(state);
+    state.protocolMessage = "MEMORY TRACE ACTIVE";
+    state.protocolMessageTimer = 140;
+}
         }
     });
 }
