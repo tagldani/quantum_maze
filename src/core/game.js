@@ -31,7 +31,7 @@ export function createGame(canvas) {
     function drawResonance() {
         if (state.resonanceTimer <= 0) return;
 
-        const progress = state.resonanceTimer / 15;
+        const progress = Math.max(0, Math.min(1, state.resonanceTimer / 15));
         const radius = 30 * (1 - progress);
 
         ctx.strokeStyle = `rgba(0, 212, 255, ${progress})`;
@@ -90,13 +90,13 @@ export function createGame(canvas) {
 
         ctx.font = "18px monospace";
         ctx.fillStyle = "#e6fbff";
-        ctx.fillText("Raccogli i frammenti, stabilizza il ciclo e resta in osservazione.", canvas.width / 2, canvas.height / 2 - 30);
-        ctx.fillText("Click o tocco per partire. Space per pausa.", canvas.width / 2, canvas.height / 2 + 10);
+        ctx.fillText("Collect fragments, stabilize the cycle, and stay in sync.", canvas.width / 2, canvas.height / 2 - 30);
+        ctx.fillText("Click or touch to start. Press Space to pause.", canvas.width / 2, canvas.height / 2 + 10);
 
         ctx.fillStyle = "#ffaa33";
         ctx.font = "16px monospace";
-        ctx.fillText("Obiettivo: stabilizzare 5 frammenti", canvas.width / 2, canvas.height / 2 + 55);
-        ctx.fillText("Premi qualsiasi tasto per iniziare", canvas.width / 2, canvas.height / 2 + 95);
+        ctx.fillText("Objective: stabilize 5 fragments", canvas.width / 2, canvas.height / 2 + 55);
+        ctx.fillText("Press any key to begin", canvas.width / 2, canvas.height / 2 + 95);
 
         ctx.textAlign = "left";
     }
