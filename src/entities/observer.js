@@ -145,51 +145,60 @@ export function updateObserver(observer, q, state) {
         }
     }
 }
-
 export function drawObserver(ctx, observer, q, state) {
     if (!observer.emerged && !observer.emerging) return;
 
+    const cycle = state?.cycleCount || 1;
     const alpha = 0.45 + Math.sin(observer.pulse) * 0.25;
-    const cycle = state.cycleCount || 1;
+    const distanceFromQ = Math.hypot(q.x - observer.x, q.y - observer.y);
 
     ctx.save();
 
     ctx.shadowBlur = cycle >= 3 ? 22 : 14;
 
-    const mergeMoment = state.memoryTraceActive && state.memoryTraceStep >= 3;
+   let displayText = ">...";
+    let fillColor = `rgba(255, 170, 51, ${alpha})`;
+    let shadowColor = "#ffaa33";
+
+    /*
+     * OBSERVER LANGUAGE
+     *
+     * >...   stable observation
+     * >. .   disturbed signal
+     * >-. .  desync / error
+     * >>.    active interference
+     * >>>    full presence / collapse
+     *
+     * The Observer must remain cryptic.
+     * No explicit explanation, no literal Q merge.
+     */
 
     if (observer.desyncTimer > 0) {
-        ctx.fillStyle = `rgba(255, 80, 80, ${alpha})`;
-        ctx.shadowColor = "#ff5050";
-    } else if (mergeMoment) {
-        ctx.fillStyle = `rgba(255, 220, 160, ${alpha})`;
-        ctx.shadowColor = "#ffdca0";
+        displayText = ">-. .";
+        fillColor = `rgba(255, 90, 80, ${alpha})`;
+        shadowColor = "#ff5a50";
+    } else if (state.memoryTraceActive) {
+        const memoryStates = [">...", ">. .", ">-. .", ">>.", ">>>"];
+        displayText = memoryStates[Math.min(state.memoryTraceStep, memoryStates.length - 1)];
+        fillColor = `rgba(255, 210, 140, ${alpha})`;
+        shadowColor = "#ffd28c";
     } else if (cycle >= 3) {
-        ctx.fillStyle = `rgba(255, 120, 40, ${alpha})`;
-        ctx.shadowColor = "#ff7828";
+        displayText = distanceFromQ < 180 ? ">>>" : ">>.";
+        fillColor = `rgba(255, 120, 40, ${alpha})`;
+        shadowColor = "#ff7828";
+    } else if (cycle === 2) {
+        displayText = distanceFromQ < 160 ? ">-. ." : ">. .";
+        fillColor = `rgba(255, 170, 51, ${alpha})`;
+        shadowColor = "#ffaa33";
     } else {
-        ctx.fillStyle = `rgba(255, 170, 51, ${alpha})`;
-        ctx.shadowColor = "#ffaa33";
+        displayText = ">...";
+        fillColor = `rgba(255, 170, 51, ${alpha})`;
+        shadowColor = "#ffaa33";
     }
 
+    ctx.fillStyle = fillColor;
+    ctx.shadowColor = shadowColor;
     ctx.font = cycle >= 3 ? "28px monospace" : "26px monospace";
-
-    let displayText;
-
-    if (state.memoryTraceActive) {
-        const states = [">...", ">..", ">.", ">>", ">>>"];
-        displayText = states[Math.min(state.memoryTraceStep, states.length - 1)];
-    } else if (observer.desyncTimer > 0) {
-        displayText = ">-. . .";
-    } else {
-        const distanceFromQ = Math.hypot(q.x - observer.x, q.y - observer.y);
-
-        if (cycle >= 3) {
-            displayText = distanceFromQ < 180 ? ">>>": ">>.";
-        } else {
-            displayText = distanceFromQ < 160 ? ">.." : ">...";
-        }
-    }
 
     ctx.fillText(displayText, observer.x, observer.y);
 

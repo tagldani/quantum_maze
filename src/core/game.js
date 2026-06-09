@@ -1,6 +1,6 @@
 import { createGameState } from "./state.js";
 import { createQ, updateQ, drawQ } from "../entities/q.js";
-import { createObserver, updateObserver, drawObserver } from "../entities/observer.js";
+import { createObserver, updateObserver, drawObserver, triggerObserverEmergence } from "../entities/observer.js";
 import { createFragments, drawFragments, spawnFragments } from "../entities/fragment.js";
 import { setupInput } from "../systems/input.js";
 import { checkCollection } from "../systems/collision.js";
@@ -303,8 +303,13 @@ export function createGame(canvas) {
         }
 
         checkCollection(q, fragments, state, observer);
-        checkCycleComplete(fragments, state, observer, spawnFragments);
-        updateObserver(observer, q, state);
+checkCycleComplete(fragments, state, observer, spawnFragments);
+
+if (!observer.emerged && !observer.emerging) {
+    triggerObserverEmergence(observer);
+}
+
+updateObserver(observer, q, state);
 
         const blink = Math.floor(Date.now() / 500) % 2 === 0;
         updateProtocolMessages();
