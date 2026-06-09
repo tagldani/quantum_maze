@@ -79,8 +79,36 @@ export function createGame(canvas) {
         }
     }
 
+    function drawStartOverlay() {
+        ctx.fillStyle = "rgba(2, 6, 23, 0.78)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "#bffaff";
+        ctx.font = "bold 44px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("QUANTUM MAZE", canvas.width / 2, canvas.height / 2 - 80);
+
+        ctx.font = "18px monospace";
+        ctx.fillStyle = "#e6fbff";
+        ctx.fillText("Raccogli i frammenti, stabilizza il ciclo e resta in osservazione.", canvas.width / 2, canvas.height / 2 - 30);
+        ctx.fillText("Click o tocco per partire. Space per pausa.", canvas.width / 2, canvas.height / 2 + 10);
+
+        ctx.fillStyle = "#ffaa33";
+        ctx.font = "16px monospace";
+        ctx.fillText("Obiettivo: stabilizzare 5 frammenti", canvas.width / 2, canvas.height / 2 + 55);
+        ctx.fillText("Premi qualsiasi tasto per iniziare", canvas.width / 2, canvas.height / 2 + 95);
+
+        ctx.textAlign = "left";
+    }
+
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (!state.started) {
+            drawStartOverlay();
+            requestAnimationFrame(draw);
+            return;
+        }
 
         // If paused, still render HUD and overlay but skip game updates
         if (state.paused) {

@@ -14,8 +14,9 @@ export function createGameState() {
         memoryTraceActive: false,
         memoryTraceStep: 0,
         memoryTraceTimer: 0,
-        echoTimer: 0
-        ,paused: false
+        echoTimer: 0,
+        paused: false,
+        started: false
     };
 }
 
