@@ -25,6 +25,18 @@ const FRAGMENT_TYPES = [
   }
 ];
 
+const RITUAL_FRAGMENT_SEQUENCE = [
+  "unstable",
+  "hidden",
+  "normal",
+  "echo",
+  "unstable"
+];
+
+function getFragmentTemplate(type) {
+  return FRAGMENT_TYPES.find(fragmentType => fragmentType.type === type) || FRAGMENT_TYPES[0];
+}
+
 export function createFragments() {
   return [];
 }
@@ -37,13 +49,19 @@ export function spawnFragments(fragments, width, height) {
 
   const margin = 90;
 
-  // IMPORTANT:
-  // The cycle progression logic completes a cycle after 5 collected fragments.
-  // Therefore we spawn exactly 5 fragments per cycle.
-  const count = 5;
+  /*
+   * Ritual-ready fragment set.
+   *
+   * The hidden Threshold Sequence is:
+   * unstable → hidden → normal → echo → unstable
+   *
+   * We spawn exactly these 5 fragment types so the ritual can be completed.
+   * The player is not told the order directly.
+   */
+  const sequence = RITUAL_FRAGMENT_SEQUENCE;
 
-  for (let i = 0; i < count; i++) {
-    const template = FRAGMENT_TYPES[i % FRAGMENT_TYPES.length];
+  for (let i = 0; i < sequence.length; i++) {
+    const template = getFragmentTemplate(sequence[i]);
 
     fragments.push({
       id: `${Date.now()}-${i}-${Math.random()}`,

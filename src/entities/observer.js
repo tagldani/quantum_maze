@@ -11,7 +11,12 @@ export function createObserver() {
         reactionCooldown: 0,
         desyncTimer: 0,
         driftAngle: 0,
-        driftRadius: 0
+        driftRadius: 0,
+
+        // Temporary symbolic reaction used when fragments are collected.
+        // This does not change movement or cycle logic.
+        signalText: null,
+        signalTimer: 0
     };
 }
 
@@ -23,6 +28,11 @@ export function triggerObserverEmergence(observer) {
     observer.targetX = 80;
     observer.targetY = window.innerHeight - 190;
     observer.emerging = true;
+}
+
+export function triggerObserverSignal(observer, text, duration = 70) {
+    observer.signalText = text;
+    observer.signalTimer = duration;
 }
 
 export function triggerObserverDesync(observer, state) {
@@ -81,6 +91,14 @@ export function updateObserver(observer, q, state) {
 
     if (observer.desyncTimer > 0) {
         observer.desyncTimer--;
+    }
+
+    if (observer.signalTimer > 0) {
+        observer.signalTimer--;
+
+        if (observer.signalTimer <= 0) {
+            observer.signalText = null;
+        }
     }
 
     if (observer.emerging) {
@@ -145,6 +163,7 @@ export function updateObserver(observer, q, state) {
         }
     }
 }
+
 export function drawObserver(ctx, observer, q, state) {
     if (!observer.emerged && !observer.emerging) return;
 
@@ -156,7 +175,7 @@ export function drawObserver(ctx, observer, q, state) {
 
     ctx.shadowBlur = cycle >= 3 ? 22 : 14;
 
-   let displayText = ">...";
+    let displayText = ">...";
     let fillColor = `rgba(255, 170, 51, ${alpha})`;
     let shadowColor = "#ffaa33";
 
@@ -167,13 +186,29 @@ export function drawObserver(ctx, observer, q, state) {
      * >. .   disturbed signal
      * >-. .  desync / error
      * >>.    active interference
-     * >>>    full presence / collapse
+     * >>>    full presence / threshold
      *
-     * The Observer must remain cryptic.
-     * No explicit explanation, no literal Q merge.
+     * Fragment reactions can temporarily override the normal cycle symbol.
+     * This prepares the ritual language without implementing the full sequence yet.
      */
 
-    if (observer.desyncTimer > 0) {
+    if (observer.signalText) {
+        displayText = observer.signalText;
+
+        if (observer.signalText === ">-. .") {
+            fillColor = `rgba(255, 90, 80, ${alpha})`;
+            shadowColor = "#ff5a50";
+        } else if (observer.signalText === ">>.") {
+            fillColor = `rgba(255, 210, 140, ${alpha})`;
+            shadowColor = "#ffd28c";
+        } else if (observer.signalText === ">>>") {
+            fillColor = `rgba(255, 235, 180, ${alpha})`;
+            shadowColor = "#ffe7b4";
+        } else {
+            fillColor = `rgba(255, 170, 51, ${alpha})`;
+            shadowColor = "#ffaa33";
+        }
+    } else if (observer.desyncTimer > 0) {
         displayText = ">-. .";
         fillColor = `rgba(255, 90, 80, ${alpha})`;
         shadowColor = "#ff5a50";
