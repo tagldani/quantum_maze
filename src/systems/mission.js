@@ -1,30 +1,43 @@
 import { triggerObserverEmergence } from "../entities/observer.js";
 
 export function checkCycleComplete(fragments, state, observer, spawnFragments) {
-    const allCollected = fragments.every(fragment => fragment.collected);
-    if (!allCollected || state.cycleTransitioning) return;
+  if (!state.started || state.paused) return;
+  if (state.cycleTransitioning) return;
 
-    state.cycleTransitioning = true;
+  const REQUIRED_FRAGMENTS_PER_CYCLE = 5;
 
-    if (state.cycleCount < state.maxCycles) {
-        state.cycleCount++;
+  const collectedCount = fragments.filter(fragment => fragment.collected).length;
 
-        if (state.cycleCount === 2) {
-            triggerObserverEmergence(observer);
-        }
+  if (collectedCount < REQUIRED_FRAGMENTS_PER_CYCLE) return;
 
-        state.protocolMessage = `CYCLE ${state.cycleCount} INITIALIZED`;
+  state.cycleTransitioning = true;
 
-        setTimeout(() => {
-            state.cycleTransitioning = false;
-            state.protocolMessage = "";
-            spawnFragments(fragments, window.innerWidth, window.innerHeight);
-        }, 700);
-    } else {
-        state.protocolMessage = "PATTERN RECOGNITION: STABLE";
-        setTimeout(() => {
-            state.protocolMessage = "TRANSFER DENIED";
-            state.protocolMessageTimer = 75;
-        }, 1200);
-    }
+  if (state.cycleCount < state.maxCycles) {
+    const nextCycle = state.cycleCount + 1;
+
+    state.protocolMessage = `CYCLE ${state.cycleCount} COMPLETE`;
+    state.protocolMessageTimer = 90;
+
+    setTimeout(() => {
+      state.cycleCount = nextCycle;
+      state.protocolMessage = `CYCLE ${state.cycleCount} INITIALIZED`;
+      state.protocolMessageTimer = 120;
+      state.objectiveText = "COLLECT 5 FRAGMENTS";
+
+      fragments.forEach(fragment => {
+        fragment.collected = true;
+      });
+
+      spawnFragments(fragments);
+
+      state.cycleTransitioning = false;
+    }, 900);
+
+    return;
+  }
+
+  state.protocolMessage = "ALL CYCLES COMPLETE";
+  state.protocolMessageTimer = 180;
+  state.objectiveText = "TRACE STABILIZED";
+  state.cycleTransitioning = false;
 }

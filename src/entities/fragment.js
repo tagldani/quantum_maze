@@ -36,7 +36,11 @@ export function spawnFragments(fragments, width, height) {
   const safeHeight = height || window.innerHeight || 600;
 
   const margin = 90;
-  const count = 8;
+
+  // IMPORTANT:
+  // The cycle progression logic completes a cycle after 5 collected fragments.
+  // Therefore we spawn exactly 5 fragments per cycle.
+  const count = 5;
 
   for (let i = 0; i < count; i++) {
     const template = FRAGMENT_TYPES[i % FRAGMENT_TYPES.length];

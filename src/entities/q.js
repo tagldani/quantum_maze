@@ -42,18 +42,15 @@ export function updateQ(q) {
     const nx = dx / distance;
     const ny = dy / distance;
 
-    // Pull grows slightly with distance, but never becomes cartoon-fast.
     const pullStrength = Math.min(distance * q.pull, 1.15);
 
     q.vx += nx * pullStrength;
     q.vy += ny * pullStrength;
   }
 
-  // Heavy damping: Q has mass, it does not snap to the pointer.
   q.vx *= q.damping * q.mass;
   q.vy *= q.damping * q.mass;
 
-  // Speed cap keeps Q stable and dense.
   const speed = Math.hypot(q.vx, q.vy);
   if (speed > q.maxSpeed) {
     const scale = q.maxSpeed / speed;
@@ -61,8 +58,6 @@ export function updateQ(q) {
     q.vy *= scale;
   }
 
-  // Subtle non-mechanical internal drift.
-  // This is not cartoon wobble: it should feel like containment instability.
   q.phase += 0.018;
   const instability = Math.min(speed / q.maxSpeed, 1);
 
@@ -150,16 +145,21 @@ export function drawQ(ctx, q, state) {
   );
   ctx.stroke();
 
+  // Small fracture tail instead of drawing a literal Q letter.
+  ctx.beginPath();
+  ctx.moveTo(
+    q.x + Math.cos(q.phase + 0.8) * radius * 0.18,
+    q.y + Math.sin(q.phase + 0.8) * radius * 0.18
+  );
+  ctx.lineTo(
+    q.x + Math.cos(q.phase + 1.2) * radius * 0.55,
+    q.y + Math.sin(q.phase + 1.2) * radius * 0.55
+  );
+  ctx.stroke();
+
   ctx.globalAlpha = 1;
 
-  // Minimal Q mark: present, but not playful.
-  ctx.fillStyle = "rgba(230, 255, 255, 0.88)";
-  ctx.font = "bold 14px monospace";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("Q", q.x, q.y + 0.5);
-
-  if (state?.memoryTraceActive) {
+  if (state && state.memoryTraceActive) {
     ctx.globalAlpha = 0.23;
     ctx.strokeStyle = "rgba(164, 255, 251, 0.7)";
     ctx.lineWidth = 1;

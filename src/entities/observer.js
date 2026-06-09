@@ -9,7 +9,9 @@ export function createObserver() {
         emerged: false,
         followStrength: 0.012,
         reactionCooldown: 0,
-        desyncTimer: 0
+        desyncTimer: 0,
+        driftAngle: 0,
+        driftRadius: 0
     };
 }
 
@@ -55,6 +57,7 @@ export function updateObserver(observer, q, state) {
     if (!observer.emerged && !observer.emerging) return;
 
     observer.pulse += 0.04;
+    observer.driftAngle += 0.015;
 
     if (state.memoryTraceActive) {
         state.memoryTraceTimer--;
@@ -102,14 +105,44 @@ export function updateObserver(observer, q, state) {
             triggerObserverDesync(observer, state);
         }
 
-        const desiredX = q.x - 90;
-        const desiredY = q.y - 70;
-        const strength = observer.desyncTimer > 0
-            ? observer.followStrength * 0.25
-            : observer.followStrength;
+        const cycle = state.cycleCount || 1;
+
+        let desiredX;
+        let desiredY;
+        let strength;
+        let minDistance;
+
+        if (cycle <= 1) {
+            desiredX = 90 + Math.sin(observer.driftAngle) * 22;
+            desiredY = window.innerHeight - 190 + Math.cos(observer.driftAngle * 0.8) * 18;
+            strength = 0.012;
+            minDistance = 170;
+        } else if (cycle === 2) {
+            desiredX = q.x - 170 + Math.sin(observer.driftAngle) * 45;
+            desiredY = q.y - 115 + Math.cos(observer.driftAngle * 0.9) * 35;
+            strength = 0.014;
+            minDistance = 140;
+        } else {
+            desiredX = q.x - 210 + Math.sin(observer.driftAngle * 1.4) * 75;
+            desiredY = q.y - 135 + Math.cos(observer.driftAngle * 1.1) * 55;
+            strength = 0.018;
+            minDistance = 130;
+        }
+
+        if (observer.desyncTimer > 0) {
+            strength *= 0.35;
+        }
 
         observer.x += (desiredX - observer.x) * strength;
         observer.y += (desiredY - observer.y) * strength;
+
+        const nextDistanceFromQ = Math.hypot(q.x - observer.x, q.y - observer.y);
+
+        if (nextDistanceFromQ < minDistance) {
+            const angle = Math.atan2(observer.y - q.y, observer.x - q.x);
+            observer.x = q.x + Math.cos(angle) * minDistance;
+            observer.y = q.y + Math.sin(angle) * minDistance;
+        }
     }
 }
 
@@ -117,33 +150,48 @@ export function drawObserver(ctx, observer, q, state) {
     if (!observer.emerged && !observer.emerging) return;
 
     const alpha = 0.45 + Math.sin(observer.pulse) * 0.25;
-    ctx.shadowBlur = 14;
+    const cycle = state.cycleCount || 1;
 
-    const mergeMoment = state.memoryTraceActive && state.memoryTraceStep === 4;
+    ctx.save();
 
-    if (mergeMoment) {
-        ctx.fillStyle = `rgba(255,255,255,${alpha})`;
-        ctx.shadowColor = "white";
+    ctx.shadowBlur = cycle >= 3 ? 22 : 14;
+
+    const mergeMoment = state.memoryTraceActive && state.memoryTraceStep >= 3;
+
+    if (observer.desyncTimer > 0) {
+        ctx.fillStyle = `rgba(255, 80, 80, ${alpha})`;
+        ctx.shadowColor = "#ff5050";
+    } else if (mergeMoment) {
+        ctx.fillStyle = `rgba(255, 220, 160, ${alpha})`;
+        ctx.shadowColor = "#ffdca0";
+    } else if (cycle >= 3) {
+        ctx.fillStyle = `rgba(255, 120, 40, ${alpha})`;
+        ctx.shadowColor = "#ff7828";
     } else {
         ctx.fillStyle = `rgba(255, 170, 51, ${alpha})`;
         ctx.shadowColor = "#ffaa33";
     }
 
-    ctx.font = "26px monospace";
+    ctx.font = cycle >= 3 ? "28px monospace" : "26px monospace";
 
-    const observerText = observer.desyncTimer > 0
-        ? ">-. . ."
-        : Math.hypot(q.x - observer.x, q.y - observer.y) < 120
-            ? ">.."
-            : ">...";
-
-    let displayText = observerText;
+    let displayText;
 
     if (state.memoryTraceActive) {
-        const states = [">...Q", ">..Q.", ">.Q..", ">Q...", ">Q"];
+        const states = [">...", ">..", ">.", ">>", ">>>"];
         displayText = states[Math.min(state.memoryTraceStep, states.length - 1)];
+    } else if (observer.desyncTimer > 0) {
+        displayText = ">-. . .";
+    } else {
+        const distanceFromQ = Math.hypot(q.x - observer.x, q.y - observer.y);
+
+        if (cycle >= 3) {
+            displayText = distanceFromQ < 180 ? ">>>": ">>.";
+        } else {
+            displayText = distanceFromQ < 160 ? ">.." : ">...";
+        }
     }
 
     ctx.fillText(displayText, observer.x, observer.y);
-    ctx.shadowBlur = 0;
+
+    ctx.restore();
 }

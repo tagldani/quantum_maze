@@ -1,6 +1,6 @@
 import { createGameState } from "./state.js";
 import { createQ, updateQ, drawQ } from "../entities/q.js";
-import { createObserver, updateObserver, drawObserver, triggerObserverEmergence } from "../entities/observer.js";
+import { createObserver, updateObserver, drawObserver } from "../entities/observer.js";
 import { createFragments, drawFragments, spawnFragments } from "../entities/fragment.js";
 import { setupInput } from "../systems/input.js";
 import { checkCollection } from "../systems/collision.js";
@@ -61,6 +61,8 @@ export function createGame(canvas) {
         observer.emerged = false;
         observer.reactionCooldown = 0;
         observer.desyncTimer = 0;
+        observer.driftAngle = 0;
+        observer.driftRadius = 0;
 
         spawnFragments(fragments, canvas.width, canvas.height);
     }
@@ -170,91 +172,31 @@ export function createGame(canvas) {
         ctx.textAlign = "left";
     }
 
-    function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    function drawWorld() {
+        const worldShakeActive =
+            state.started &&
+            !state.paused &&
+            state.cycleCount === state.maxCycles;
 
-        if (!state.started) {
-            drawStartOverlay();
-            requestAnimationFrame(draw);
-            return;
+        const worldShakeAmount = worldShakeActive ? 3 : 0;
+
+        ctx.save();
+
+        if (worldShakeActive) {
+            const shakeX = (Math.random() - 0.5) * worldShakeAmount;
+            const shakeY = (Math.random() - 0.5) * worldShakeAmount;
+            ctx.translate(shakeX, shakeY);
         }
-
-        // If paused, still render HUD and overlay but skip game updates
-        if (state.paused) {
-            drawFragments(ctx, fragments, state);
-            drawResonance();
-            drawObserver(ctx, observer, q, state);
-            drawHUD();
-
-            ctx.fillStyle = "rgba(2, 6, 23, 0.78)";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            ctx.fillStyle = "#bffaff";
-            ctx.textAlign = "center";
-            ctx.font = "bold 48px monospace";
-            ctx.fillText("PAUSED", canvas.width / 2, canvas.height / 2 - 70);
-
-            ctx.font = "16px monospace";
-            ctx.fillStyle = "#e6fbff";
-            ctx.fillText("Resume the current cycle or reset the run.", canvas.width / 2, canvas.height / 2 - 20);
-
-            const buttonX = canvas.width / 2 - 110;
-            const buttonY = canvas.height / 2 + 30;
-            const buttonW = 220;
-            const buttonH = 44;
-
-            ctx.fillStyle = "rgba(0, 212, 255, 0.18)";
-            ctx.fillRect(buttonX, buttonY, buttonW, buttonH);
-            ctx.strokeStyle = "#00d4ff";
-            ctx.lineWidth = 1.5;
-            ctx.strokeRect(buttonX, buttonY, buttonW, buttonH);
-            ctx.fillStyle = "#bffaff";
-            ctx.fillText("Resume", canvas.width / 2, buttonY + 28);
-
-            ctx.fillStyle = "rgba(255, 170, 51, 0.18)";
-            ctx.fillRect(buttonX, buttonY + 60, buttonW, buttonH);
-            ctx.strokeStyle = "#ffaa33";
-            ctx.strokeRect(buttonX, buttonY + 60, buttonW, buttonH);
-            ctx.fillStyle = "#ffe0b2";
-            ctx.fillText("Restart", canvas.width / 2, buttonY + 88);
-
-            ctx.fillStyle = "rgba(120, 255, 180, 0.18)";
-            ctx.fillRect(buttonX, buttonY + 120, buttonW, buttonH);
-            ctx.strokeStyle = "#7cffb4";
-            ctx.strokeRect(buttonX, buttonY + 120, buttonW, buttonH);
-            ctx.fillStyle = "#d6ffe7";
-            ctx.fillText("Back to Menu", canvas.width / 2, buttonY + 148);
-
-            ctx.textAlign = "left";
-            requestAnimationFrame(draw);
-            return;
-        }
-
-        updateQ(q);
-
-        if (state.memoryTraceTriggered) {
-            if (state.echoTimer <= 0 && Math.random() < 0.0008) {
-                state.protocolMessage = "ECHO PRESENT";
-                state.protocolMessageTimer = 120;
-                state.echoTimer = 600;
-            }
-
-            if (state.echoTimer > 0) {
-                state.echoTimer--;
-            }
-        }
-
-        checkCollection(q, fragments, state, observer);
-        checkCycleComplete(fragments, state, observer, spawnFragments);
 
         drawFragments(ctx, fragments, state);
         drawResonance();
-        updateObserver(observer, q, state);
         drawObserver(ctx, observer, q, state);
+        drawQ(ctx, q, state);
 
-        const blink = Math.floor(Date.now() / 500) % 2 === 0;
-        updateProtocolMessages();
+        ctx.restore();
+    }
 
+    function drawMainHUD(blink) {
         drawText(`Q ${state.quantumScore}`, 20, 40, 24, "#bffaff");
         drawText("R E S O N A N C E", 20, 70, 12, "rgba(191, 250, 255, 0.75)");
         drawDashedLine(20, 58, 150, "#00d4ff");
@@ -280,14 +222,101 @@ export function createGame(canvas) {
 
             drawDashedLine(20, canvas.height - 35, canvas.width - 40, "#ffaa33");
         }
+    }
 
-        drawQ(ctx, q, state);
+    function drawPauseOverlay() {
+        ctx.fillStyle = "rgba(2, 6, 23, 0.78)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "#bffaff";
+        ctx.textAlign = "center";
+        ctx.font = "bold 48px monospace";
+        ctx.fillText("PAUSED", canvas.width / 2, canvas.height / 2 - 70);
+
+        ctx.font = "16px monospace";
+        ctx.fillStyle = "#e6fbff";
+        ctx.fillText("Resume the current cycle or reset the run.", canvas.width / 2, canvas.height / 2 - 20);
+
+        const buttonX = canvas.width / 2 - 110;
+        const buttonY = canvas.height / 2 + 30;
+        const buttonW = 220;
+        const buttonH = 44;
+
+        ctx.fillStyle = "rgba(0, 212, 255, 0.18)";
+        ctx.fillRect(buttonX, buttonY, buttonW, buttonH);
+        ctx.strokeStyle = "#00d4ff";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(buttonX, buttonY, buttonW, buttonH);
+        ctx.fillStyle = "#bffaff";
+        ctx.fillText("Resume", canvas.width / 2, buttonY + 28);
+
+        ctx.fillStyle = "rgba(255, 170, 51, 0.18)";
+        ctx.fillRect(buttonX, buttonY + 60, buttonW, buttonH);
+        ctx.strokeStyle = "#ffaa33";
+        ctx.strokeRect(buttonX, buttonY + 60, buttonW, buttonH);
+        ctx.fillStyle = "#ffe0b2";
+        ctx.fillText("Restart", canvas.width / 2, buttonY + 88);
+
+        ctx.fillStyle = "rgba(120, 255, 180, 0.18)";
+        ctx.fillRect(buttonX, buttonY + 120, buttonW, buttonH);
+        ctx.strokeStyle = "#7cffb4";
+        ctx.strokeRect(buttonX, buttonY + 120, buttonW, buttonH);
+        ctx.fillStyle = "#d6ffe7";
+        ctx.fillText("Back to Menu", canvas.width / 2, buttonY + 148);
+
+        ctx.textAlign = "left";
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (!state.started) {
+            drawStartOverlay();
+            requestAnimationFrame(draw);
+            return;
+        }
+
+        if (state.paused) {
+            const blink = Math.floor(Date.now() / 500) % 2 === 0;
+
+            drawWorld();
+            drawMainHUD(blink);
+            drawHUD();
+            drawPauseOverlay();
+
+            requestAnimationFrame(draw);
+            return;
+        }
+
+        updateQ(q);
+
+        if (state.memoryTraceTriggered) {
+            if (state.echoTimer <= 0 && Math.random() < 0.0008) {
+                state.protocolMessage = "ECHO PRESENT";
+                state.protocolMessageTimer = 120;
+                state.echoTimer = 600;
+            }
+
+            if (state.echoTimer > 0) {
+                state.echoTimer--;
+            }
+        }
+
+        checkCollection(q, fragments, state, observer);
+        checkCycleComplete(fragments, state, observer, spawnFragments);
+        updateObserver(observer, q, state);
+
+        const blink = Math.floor(Date.now() / 500) % 2 === 0;
+        updateProtocolMessages();
+
+        drawWorld();
+        drawMainHUD(blink);
         drawHUD();
+
         requestAnimationFrame(draw);
     }
 
     function drawHUD() {
-        // fragment counts by type
         const counts = fragments.reduce((acc, f) => {
             if (f.collected) return acc;
             acc[f.type] = (acc[f.type] || 0) + 1;
@@ -302,21 +331,20 @@ export function createGame(canvas) {
         ctx.fillText("Fragments:", startX, y);
         y += 24;
 
-        const types = ["normal", "unstable", "echo", "visible"];
+        const types = ["normal", "unstable", "echo", "hidden"];
         types.forEach(t => {
             const c = counts[t] || 0;
             let color = "#ccc";
             if (t === "normal") color = "#00d4ff";
             if (t === "unstable") color = "#ffae00";
             if (t === "echo") color = "#a4fffb";
-            if (t === "visible") color = "#22ff88";
+            if (t === "hidden") color = "#22ff88";
 
             ctx.fillStyle = color;
             ctx.fillText(`${t}: ${c}`, startX, y);
             y += 20;
         });
 
-        // show pause hint
         ctx.fillStyle = "rgba(255,255,255,0.6)";
         ctx.font = "12px monospace";
         ctx.fillText("Press SPACE to Pause/Resume", startX, canvas.height - 30);
