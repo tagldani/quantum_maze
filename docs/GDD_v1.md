@@ -87,3 +87,17 @@ Only later should it be perceived.
 Only much later should it be seen.
 
 The player should suspect the Observer before learning its existence.
+
+## Current Upgrade Notes
+
+- Terrain drift is an ambient phase effect, not a direct threat mechanic.
+- The drift is intentionally subtle before cycle 3 and becomes more noticeable from cycle 3 onward.
+- Q remains a simple pulsing sphere in the current phase, preserving the original sensory identity.
+- The Observer glyph is currently expressed as ">-. . ." during desync states to reinforce uncertainty rather than clarity.
+- Green fragments are treated as visible fragments, not hidden ones, to preserve their visible presence in the maze.
+
+## Play Feel Direction
+
+The phase should feel experiential and prophetic rather than tactical.
+The player should sense that the environment is changing before they can explain why.
+This supports the current design goal: the Maze should feel alive, unstable, and slightly foretelling.

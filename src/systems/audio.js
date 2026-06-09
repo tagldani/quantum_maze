@@ -24,7 +24,7 @@ export async function playCollectSound(fragment) {
     let freq = 440;
     if (fragment && fragment.type === "unstable") freq = 660;
     if (fragment && fragment.type === "echo") freq = 520;
-    if (fragment && fragment.type === "hidden") freq = 340;
+    if (fragment && fragment.type === "visible") freq = 340;
 
     osc.frequency.setValueAtTime(freq, ctx.currentTime);
     gain.gain.setValueAtTime(0.0001, ctx.currentTime);

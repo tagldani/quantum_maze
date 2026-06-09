@@ -302,14 +302,14 @@ export function createGame(canvas) {
         ctx.fillText("Fragments:", startX, y);
         y += 24;
 
-        const types = ["normal", "unstable", "echo", "hidden"];
+        const types = ["normal", "unstable", "echo", "visible"];
         types.forEach(t => {
             const c = counts[t] || 0;
             let color = "#ccc";
             if (t === "normal") color = "#00d4ff";
             if (t === "unstable") color = "#ffae00";
             if (t === "echo") color = "#a4fffb";
-            if (t === "hidden") color = "#22ff88";
+            if (t === "visible") color = "#22ff88";
 
             ctx.fillStyle = color;
             ctx.fillText(`${t}: ${c}`, startX, y);

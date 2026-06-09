@@ -50,6 +50,15 @@ La Q non emette energia.
 
 La Q altera la realtà circostante.
 
+## Current Visual Direction
+
+- Q is currently rendered as a pulsing sphere to preserve the original simple form.
+- Terrain drift should appear as a soft premonition before cycle 3 and become clearer from cycle 3 onward.
+- Fragment visual behavior should remain readable and visible, especially for the green/visible fragment type.
+- The Observer should feel unreadable and slightly unstable, not fully legible.
+
+This keeps the aesthetic experiential: atmosphere first, explanation later.
+
 Obiettivo percettivo:
 
 Il giocatore deve pensare:

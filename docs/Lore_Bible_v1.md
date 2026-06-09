@@ -53,3 +53,10 @@ Io questo step lo chiamerei:
 
 ```text
 Observer Emergence
+```
+
+## Current Lore Direction
+
+The Maze is beginning to behave like a field that anticipates change.
+The terrain drift should feel like an omen or prelude, not an immediate revelation.
+This supports the idea that the Observer is not yet a threat, but a presence that is becoming perceptible through the environment itself.

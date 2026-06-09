@@ -132,7 +132,7 @@ export function drawObserver(ctx, observer, q, state) {
     ctx.font = "26px monospace";
 
     const observerText = observer.desyncTimer > 0
-        ? ">-."
+        ? ">-. . ."
         : Math.hypot(q.x - observer.x, q.y - observer.y) < 120
             ? ">.."
             : ">...";

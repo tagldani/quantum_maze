@@ -17,3 +17,9 @@ SUBJECT RETAINED
 PROTOCOL ACTIVE
 
 PATTERN RECOGNITION: STABLE
+
+## Current Terminology Notes
+
+- Visible fragment: a readable, perceptible fragment in the field.
+- Drift phase: the environment begins to subtly shift as a premonition of deeper change.
+- Observer glyph: the desync state uses ">-. . ." to imply instability without fully resolving it.

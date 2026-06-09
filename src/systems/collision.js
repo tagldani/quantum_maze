@@ -5,7 +5,7 @@ import { playCollectSound } from "../systems/audio.js";
 function getFragmentMessage(fragment) {
     if (fragment.type === "unstable") return "UNSTABLE FRAGMENT STABILIZED";
     if (fragment.type === "echo") return "ECHO FRAGMENT SYNCED";
-    if (fragment.type === "hidden") return "HIDDEN SIGNAL SECURED";
+    if (fragment.type === "visible") return "VISIBLE SIGNAL SECURED";
 
     const randomIndex = Math.floor(Math.random() * fragmentProtocolMessages.length);
     return fragmentProtocolMessages[randomIndex];
