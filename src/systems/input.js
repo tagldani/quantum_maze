@@ -2,6 +2,8 @@ import { resumeAudio } from "./audio.js";
 
 export function setupInput(canvas, q, state) {
     canvas.addEventListener("click", event => {
+        if (state.paused) return;
+
         q.targetX = event.clientX;
         q.targetY = event.clientY;
         state.started = true;
@@ -9,6 +11,8 @@ export function setupInput(canvas, q, state) {
     });
 
     canvas.addEventListener("touchstart", event => {
+        if (state.paused) return;
+
         const touch = event.touches[0];
         q.targetX = touch.clientX;
         q.targetY = touch.clientY;

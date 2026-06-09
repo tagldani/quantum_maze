@@ -28,6 +28,73 @@ export function createGame(canvas) {
     window.addEventListener("resize", resize);
     setupInput(canvas, q, state);
 
+    function resetRun() {
+        state.quantumScore = 0;
+        state.cycleCount = 1;
+        state.cycleTransitioning = false;
+        state.protocolMessage = "";
+        state.protocolMessageTimer = 0;
+        state.resonanceTimer = 0;
+        state.resonanceX = 0;
+        state.resonanceY = 0;
+        state.memoryTraceTriggered = false;
+        state.memoryTraceActive = false;
+        state.memoryTraceStep = 0;
+        state.memoryTraceTimer = 0;
+        state.echoTimer = 0;
+        state.paused = false;
+        state.started = true;
+
+        q.x = canvas.width / 2;
+        q.y = canvas.height / 2;
+        q.targetX = canvas.width / 2;
+        q.targetY = canvas.height / 2;
+        q.vx = 0;
+        q.vy = 0;
+
+        observer.x = 80;
+        observer.y = canvas.height - 60;
+        observer.targetX = 80;
+        observer.targetY = canvas.height - 190;
+        observer.pulse = 0;
+        observer.emerging = false;
+        observer.emerged = false;
+        observer.reactionCooldown = 0;
+        observer.desyncTimer = 0;
+
+        spawnFragments(fragments, canvas.width, canvas.height);
+    }
+
+    function handlePauseAction(event) {
+        if (!state.paused) return;
+
+        const x = event.clientX;
+        const y = event.clientY;
+        const centerX = canvas.width / 2;
+        const startY = canvas.height / 2 - 20;
+
+        const resumeRect = { x: centerX - 110, y: startY + 30, w: 220, h: 44 };
+        const restartRect = { x: centerX - 110, y: startY + 90, w: 220, h: 44 };
+        const menuRect = { x: centerX - 110, y: startY + 150, w: 220, h: 44 };
+
+        if (x >= resumeRect.x && x <= resumeRect.x + resumeRect.w && y >= resumeRect.y && y <= resumeRect.y + resumeRect.h) {
+            state.paused = false;
+            return;
+        }
+
+        if (x >= restartRect.x && x <= restartRect.x + restartRect.w && y >= restartRect.y && y <= restartRect.y + restartRect.h) {
+            resetRun();
+            return;
+        }
+
+        if (x >= menuRect.x && x <= menuRect.x + menuRect.w && y >= menuRect.y && y <= menuRect.y + menuRect.h) {
+            state.started = false;
+            state.paused = false;
+        }
+    }
+
+    canvas.addEventListener("click", handlePauseAction);
+
     function drawResonance() {
         if (state.resonanceTimer <= 0) return;
 
@@ -118,12 +185,47 @@ export function createGame(canvas) {
             drawResonance();
             drawObserver(ctx, observer, q, state);
             drawHUD();
-            // pause overlay
-            ctx.fillStyle = "rgba(0,0,0,0.6)";
+
+            ctx.fillStyle = "rgba(2, 6, 23, 0.78)";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "white";
-            ctx.font = "48px monospace";
-            ctx.fillText("PAUSED", canvas.width / 2 - 80, canvas.height / 2);
+
+            ctx.fillStyle = "#bffaff";
+            ctx.textAlign = "center";
+            ctx.font = "bold 48px monospace";
+            ctx.fillText("PAUSED", canvas.width / 2, canvas.height / 2 - 70);
+
+            ctx.font = "16px monospace";
+            ctx.fillStyle = "#e6fbff";
+            ctx.fillText("Resume the current cycle or reset the run.", canvas.width / 2, canvas.height / 2 - 20);
+
+            const buttonX = canvas.width / 2 - 110;
+            const buttonY = canvas.height / 2 + 30;
+            const buttonW = 220;
+            const buttonH = 44;
+
+            ctx.fillStyle = "rgba(0, 212, 255, 0.18)";
+            ctx.fillRect(buttonX, buttonY, buttonW, buttonH);
+            ctx.strokeStyle = "#00d4ff";
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(buttonX, buttonY, buttonW, buttonH);
+            ctx.fillStyle = "#bffaff";
+            ctx.fillText("Resume", canvas.width / 2, buttonY + 28);
+
+            ctx.fillStyle = "rgba(255, 170, 51, 0.18)";
+            ctx.fillRect(buttonX, buttonY + 60, buttonW, buttonH);
+            ctx.strokeStyle = "#ffaa33";
+            ctx.strokeRect(buttonX, buttonY + 60, buttonW, buttonH);
+            ctx.fillStyle = "#ffe0b2";
+            ctx.fillText("Restart", canvas.width / 2, buttonY + 88);
+
+            ctx.fillStyle = "rgba(120, 255, 180, 0.18)";
+            ctx.fillRect(buttonX, buttonY + 120, buttonW, buttonH);
+            ctx.strokeStyle = "#7cffb4";
+            ctx.strokeRect(buttonX, buttonY + 120, buttonW, buttonH);
+            ctx.fillStyle = "#d6ffe7";
+            ctx.fillText("Back to Menu", canvas.width / 2, buttonY + 148);
+
+            ctx.textAlign = "left";
             requestAnimationFrame(draw);
             return;
         }
