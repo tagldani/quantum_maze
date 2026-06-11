@@ -102,6 +102,8 @@ function triggerThresholdDetected(state, observer) {
   state.thresholdSignalShown = true;
   state.thresholdEntryCharge = 0;
   state.thresholdEntered = false;
+  state.nullFieldActive = false;
+  state.nullFieldTimer = 0;
 
   state.protocolMessage = "THRESHOLD DETECTED";
   state.protocolMessageTimer = 180;
@@ -140,22 +142,84 @@ function startNextCycle(fragments, state, observer, spawnFragments, nextCycle) {
   state.cycleTransitioning = false;
 }
 
+function activateNullField(state, observer) {
+  if (state.nullFieldActive) return;
+
+  state.nullFieldActive = true;
+  state.nullFieldTimer = 1;
+  state.protocolMessage = "NULL FIELD";
+  state.protocolMessageTimer = 240;
+  state.objectiveText = "LISTEN TO THE FIELD";
+  state.cycleTransitioning = false;
+
+  if (observer) {
+    triggerObserverSignal(observer, "<<<", 260);
+  }
+
+  console.log("NULL FIELD ACTIVE");
+}
+
+function acceptTransfer(state, observer) {
+  state.protocolMessage = "TRANSFER ACCEPTED";
+  state.protocolMessageTimer = 220;
+  state.objectiveText = "NULL FIELD PENDING";
+  state.cycleTransitioning = false;
+
+  if (observer) {
+    triggerObserverSignal(observer, ">>>", 220);
+  }
+
+  console.log("TRANSFER ACCEPTED - preparing Null Field");
+
+  setTimeout(() => {
+    if (!state.thresholdEntered) return;
+    activateNullField(state, observer);
+  }, 1200);
+}
+
+function shouldCancelFailedTransfer(state) {
+  return state.thresholdEntered === true;
+}
+
 function triggerFailedTransferLoop(fragments, state, observer, spawnFragments) {
+  /*
+   * Safety guard.
+   *
+   * If Q stabilizes the Threshold while a failed-transfer timeout
+   * is already pending, the failed loop must be cancelled.
+   */
+  if (shouldCancelFailedTransfer(state)) {
+    acceptTransfer(state, observer);
+    return;
+  }
+
   if (observer) {
     triggerObserverSignal(observer, ">-. .", 160);
   }
 
-  console.log("TRANSFER DENIED - ritual loop restarted");
+  console.log("TRANSFER DENIED - ritual loop pending");
 
   state.protocolMessage = "TRANSFER DENIED";
   state.protocolMessageTimer = 150;
   state.objectiveText = "TRACE REPEATED";
 
   setTimeout(() => {
+    if (shouldCancelFailedTransfer(state)) {
+      console.log("FAILED TRANSFER CANCELLED - threshold entered");
+      acceptTransfer(state, observer);
+      return;
+    }
+
     state.protocolMessage = "TRACE REPEATED";
     state.protocolMessageTimer = 120;
 
     setTimeout(() => {
+      if (shouldCancelFailedTransfer(state)) {
+        console.log("FAILED TRANSFER CANCELLED - threshold entered");
+        acceptTransfer(state, observer);
+        return;
+      }
+
       /*
        * Failed Transfer Loop.
        *
@@ -170,27 +234,19 @@ function triggerFailedTransferLoop(fragments, state, observer, spawnFragments) {
       state.thresholdSignalShown = false;
       state.thresholdEntryCharge = 0;
       state.thresholdEntered = false;
+      state.nullFieldActive = false;
+      state.nullFieldTimer = 0;
+
+      console.log("TRANSFER DENIED - ritual loop restarted");
 
       startNextCycle(fragments, state, observer, spawnFragments, 1);
     }, 900);
   }, 1000);
 }
 
-function acceptTransfer(state, observer) {
-  state.protocolMessage = "TRANSFER ACCEPTED";
-  state.protocolMessageTimer = 220;
-  state.objectiveText = "NULL FIELD PENDING";
-  state.cycleTransitioning = false;
-
-  if (observer) {
-    triggerObserverSignal(observer, ">>>", 220);
-  }
-
-  console.log("TRANSFER ACCEPTED - Null Chamber pending");
-}
-
 export function checkCycleComplete(fragments, state, observer, spawnFragments) {
   if (!state.started || state.paused) return;
+  if (state.nullFieldActive) return;
   if (state.cycleTransitioning) return;
 
   const collectedCount = fragments.filter(fragment => fragment.collected).length;
@@ -216,7 +272,9 @@ export function checkCycleComplete(fragments, state, observer, spawnFragments) {
    * Cycle 3/3 completed.
    *
    * If Q has stabilized the Threshold, the system accepts the
-   * transfer. The actual Null Chamber is not implemented yet.
+   * transfer and activates the Null Field logical state.
+   *
+   * Visual Null Field rendering is not implemented in this step.
    */
   if (state.thresholdEntered) {
     acceptTransfer(state, observer);
@@ -224,4 +282,4 @@ export function checkCycleComplete(fragments, state, observer, spawnFragments) {
   }
 
   triggerFailedTransferLoop(fragments, state, observer, spawnFragments);
-} 
+}
