@@ -26,9 +26,6 @@ export function createGameState() {
          *
          * Example:
          * ["unstable", "hidden", "normal", "echo", "unstable"]
-         *
-         * This prepares the Threshold Sequence logic.
-         * It does not punish, reward or alter gameplay yet.
          */
         currentCycleSequence: [],
         completedCycleSequences: [],
@@ -46,40 +43,30 @@ export function createGameState() {
 
         /*
          * Stores the result of each completed cycle pattern check.
-         *
-         * Example:
-         * [
-         *   { cycle: 1, status: "drift", sequence: [...] },
-         *   { cycle: 2, status: "aligned", sequence: [...] }
-         * ]
          */
         ritualPatternResults: [],
 
         /*
          * Threshold Detection v1.
-         *
-         * thresholdDetected becomes true when the system recognizes
-         * that Cycle 1 and Cycle 2 were both aligned in the same loop.
-         *
-         * For now this does not open a physical gate and does not
-         * trigger the Null Chamber. It only marks Cycle 3 as special.
          */
         thresholdDetected: false,
         thresholdSignalShown: false,
 
         /*
          * Threshold Entry v1.
-         *
-         * thresholdEntryCharge grows while Q remains close to the
-         * detected Threshold.
-         *
-         * thresholdEntered becomes true once Q has stabilized the
-         * signal long enough.
-         *
-         * This does not enter the Null Chamber yet.
          */
         thresholdEntryCharge: 0,
-        thresholdEntered: false
+        thresholdEntered: false,
+
+        /*
+         * Null Field State v1.
+         *
+         * This prepares the first state beyond the maze loop.
+         * It does not change visuals yet.
+         * It does not trigger Null Chamber yet.
+         */
+        nullFieldActive: false,
+        nullFieldTimer: 0
     };
 }
 
