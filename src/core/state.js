@@ -53,7 +53,19 @@ export function createGameState() {
          *   { cycle: 2, status: "aligned", sequence: [...] }
          * ]
          */
-        ritualPatternResults: []
+        ritualPatternResults: [],
+
+        /*
+         * Threshold Detection v1.
+         *
+         * thresholdDetected becomes true when the system recognizes
+         * that Cycle 1 and Cycle 2 were both aligned in the same loop.
+         *
+         * For now this does not open a physical gate and does not
+         * trigger the Null Chamber. It only marks Cycle 3 as special.
+         */
+        thresholdDetected: false,
+        thresholdSignalShown: false
     };
 }
 
