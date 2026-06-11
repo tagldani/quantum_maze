@@ -32,6 +32,7 @@ export function createGame(canvas) {
         state.quantumScore = 0;
         state.cycleCount = 1;
         state.cycleTransitioning = false;
+        state.objectiveText = "STABILIZE 5 FRAGMENTS";
         state.protocolMessage = "";
         state.protocolMessageTimer = 0;
         state.resonanceTimer = 0;
@@ -44,6 +45,12 @@ export function createGame(canvas) {
         state.echoTimer = 0;
         state.paused = false;
         state.started = true;
+
+        state.currentCycleSequence = [];
+        state.completedCycleSequences = [];
+        state.ritualPatternResults = [];
+        state.thresholdDetected = false;
+        state.thresholdSignalShown = false;
 
         q.x = canvas.width / 2;
         q.y = canvas.height / 2;
@@ -63,6 +70,8 @@ export function createGame(canvas) {
         observer.desyncTimer = 0;
         observer.driftAngle = 0;
         observer.driftRadius = 0;
+        observer.signalText = null;
+        observer.signalTimer = 0;
 
         spawnFragments(fragments, canvas.width, canvas.height);
     }
@@ -140,12 +149,90 @@ export function createGame(canvas) {
         const stickyMessages = [
             `CYCLE ${state.cycleCount} INITIALIZED`,
             "PATTERN RECOGNITION: STABLE",
-            "TRANSFER DENIED"
+            "TRANSFER DENIED",
+            "TRACE REPEATED",
+            "THRESHOLD DETECTED"
         ];
 
         if (!stickyMessages.includes(state.protocolMessage)) {
             state.protocolMessage = "";
         }
+    }
+
+    function drawThresholdPresence() {
+        if (!state.thresholdDetected) return;
+
+        const thresholdX = canvas.width / 2;
+        const thresholdY = canvas.height / 2;
+        const distanceFromQ = Math.hypot(q.x - thresholdX, q.y - thresholdY);
+
+        const time = Date.now() * 0.002;
+        const proximity = Math.max(0, 1 - distanceFromQ / 260);
+
+        const baseRadius = 42 + Math.sin(time) * 4;
+        const outerRadius = 78 + Math.sin(time * 0.7) * 8 + proximity * 18;
+
+        ctx.save();
+
+        /*
+         * Threshold Presence v1.
+         *
+         * This is not yet an entrance.
+         * It is a visible signal that the ritual pattern has been recognized.
+         *
+         * Q can approach it, but no transfer / Null Chamber is triggered yet.
+         */
+
+        ctx.globalAlpha = 0.12 + proximity * 0.18;
+        ctx.strokeStyle = "rgba(255, 235, 180, 0.75)";
+        ctx.lineWidth = 1.2;
+        ctx.shadowBlur = 22 + proximity * 18;
+        ctx.shadowColor = "#ffe7b4";
+
+        ctx.beginPath();
+        ctx.arc(thresholdX, thresholdY, outerRadius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.globalAlpha = 0.22 + proximity * 0.28;
+        ctx.strokeStyle = "rgba(255, 170, 51, 0.85)";
+        ctx.lineWidth = 1.5;
+
+        ctx.beginPath();
+        ctx.arc(thresholdX, thresholdY, baseRadius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.globalAlpha = 0.45 + proximity * 0.35;
+        ctx.fillStyle = "rgba(255, 235, 180, 0.95)";
+        ctx.shadowBlur = 16 + proximity * 12;
+        ctx.shadowColor = "#ffe7b4";
+        ctx.font = "bold 26px monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        ctx.fillText(">>>", thresholdX, thresholdY);
+
+        if (proximity > 0.25) {
+            ctx.globalAlpha = proximity * 0.35;
+            ctx.strokeStyle = "rgba(191, 250, 255, 0.85)";
+            ctx.lineWidth = 1;
+
+            ctx.beginPath();
+            ctx.moveTo(q.x, q.y);
+            ctx.lineTo(thresholdX, thresholdY);
+            ctx.stroke();
+        }
+
+        if (proximity > 0.65) {
+            ctx.globalAlpha = 0.7;
+            ctx.fillStyle = "rgba(255, 235, 180, 0.95)";
+            ctx.font = "12px monospace";
+            ctx.fillText("SIGNAL STABLE", thresholdX, thresholdY + outerRadius + 24);
+        }
+
+        ctx.restore();
+
+        ctx.textAlign = "left";
+        ctx.textBaseline = "alphabetic";
     }
 
     function drawStartOverlay() {
@@ -188,8 +275,9 @@ export function createGame(canvas) {
             ctx.translate(shakeX, shakeY);
         }
 
-        drawFragments(ctx, fragments, state);
+        drawFragments(ctx, fragments, q);
         drawResonance();
+        drawThresholdPresence();
         drawObserver(ctx, observer, q, state);
         drawQ(ctx, q, state);
 
@@ -303,13 +391,13 @@ export function createGame(canvas) {
         }
 
         checkCollection(q, fragments, state, observer);
-checkCycleComplete(fragments, state, observer, spawnFragments);
+        checkCycleComplete(fragments, state, observer, spawnFragments);
 
-if (!observer.emerged && !observer.emerging) {
-    triggerObserverEmergence(observer);
-}
+        if (!observer.emerged && !observer.emerging) {
+            triggerObserverEmergence(observer);
+        }
 
-updateObserver(observer, q, state);
+        updateObserver(observer, q, state);
 
         const blink = Math.floor(Date.now() / 500) % 2 === 0;
         updateProtocolMessages();
@@ -340,6 +428,7 @@ updateObserver(observer, q, state);
         types.forEach(t => {
             const c = counts[t] || 0;
             let color = "#ccc";
+
             if (t === "normal") color = "#00d4ff";
             if (t === "unstable") color = "#ffae00";
             if (t === "echo") color = "#a4fffb";
