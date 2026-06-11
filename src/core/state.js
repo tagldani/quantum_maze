@@ -28,10 +28,32 @@ export function createGameState() {
          * ["unstable", "hidden", "normal", "echo", "unstable"]
          *
          * This prepares the Threshold Sequence logic.
-         * It does not validate, punish, reward or alter gameplay yet.
+         * It does not punish, reward or alter gameplay yet.
          */
         currentCycleSequence: [],
-        completedCycleSequences: []
+        completedCycleSequences: [],
+
+        /*
+         * Canonical ritual sequence.
+         *
+         * Internal design name:
+         * Threshold Sequence / Amber Trace Sequence
+         *
+         * Ritual translation:
+         * call -> see -> stabilize -> remember -> open
+         */
+        thresholdSequence: ["unstable", "hidden", "normal", "echo", "unstable"],
+
+        /*
+         * Stores the result of each completed cycle pattern check.
+         *
+         * Example:
+         * [
+         *   { cycle: 1, status: "drift", sequence: [...] },
+         *   { cycle: 2, status: "aligned", sequence: [...] }
+         * ]
+         */
+        ritualPatternResults: []
     };
 }
 
