@@ -35,6 +35,16 @@ export function checkCollection(q, fragments, state, observer) {
 
         if (distance < q.radius + 8) {
             fragment.collected = true;
+
+            if (state.currentCycleSequence) {
+                state.currentCycleSequence.push(fragment.type);
+
+                console.log(
+                    `Cycle ${state.cycleCount} sequence:`,
+                    state.currentCycleSequence.join(" -> ")
+                );
+            }
+
             state.quantumScore += fragment.score;
             state.protocolMessage = getFragmentMessage(fragment);
             state.protocolMessageTimer = 120;
@@ -44,8 +54,11 @@ export function checkCollection(q, fragments, state, observer) {
 
             triggerObserverSignal(observer, getFragmentObserverSignal(fragment), 80);
 
-            // play feedback sound
-            try { playCollectSound(fragment); } catch (e) { /* ignore if audio fails */ }
+            try {
+                playCollectSound(fragment);
+            } catch (e) {
+                /* ignore if audio fails */
+            }
 
             if (fragment.effect === "desync") {
                 triggerObserverDesync(observer, state);

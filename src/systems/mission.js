@@ -1,16 +1,42 @@
 import { triggerObserverEmergence } from "../entities/observer.js";
 
+const REQUIRED_FRAGMENTS_PER_CYCLE = 5;
+
+function storeCompletedCycleSequence(state) {
+  if (!state.currentCycleSequence) return;
+  if (!state.completedCycleSequences) return;
+
+  const completedSequence = [...state.currentCycleSequence];
+
+  state.completedCycleSequences.push({
+    cycle: state.cycleCount,
+    sequence: completedSequence
+  });
+
+  console.log(
+    `Cycle ${state.cycleCount} completed sequence:`,
+    completedSequence.join(" -> ")
+  );
+
+  console.log(
+    "Completed cycle sequences:",
+    state.completedCycleSequences
+  );
+
+  state.currentCycleSequence = [];
+}
+
 export function checkCycleComplete(fragments, state, observer, spawnFragments) {
   if (!state.started || state.paused) return;
   if (state.cycleTransitioning) return;
-
-  const REQUIRED_FRAGMENTS_PER_CYCLE = 5;
 
   const collectedCount = fragments.filter(fragment => fragment.collected).length;
 
   if (collectedCount < REQUIRED_FRAGMENTS_PER_CYCLE) return;
 
   state.cycleTransitioning = true;
+
+  storeCompletedCycleSequence(state);
 
   if (state.cycleCount < state.maxCycles) {
     const nextCycle = state.cycleCount + 1;
