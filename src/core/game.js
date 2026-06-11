@@ -51,6 +51,8 @@ export function createGame(canvas) {
         state.ritualPatternResults = [];
         state.thresholdDetected = false;
         state.thresholdSignalShown = false;
+        state.thresholdEntryCharge = 0;
+        state.thresholdEntered = false;
 
         q.x = canvas.width / 2;
         q.y = canvas.height / 2;
@@ -151,7 +153,8 @@ export function createGame(canvas) {
             "PATTERN RECOGNITION: STABLE",
             "TRANSFER DENIED",
             "TRACE REPEATED",
-            "THRESHOLD DETECTED"
+            "THRESHOLD DETECTED",
+            "TRANSFER ACCEPTED"
         ];
 
         if (!stickyMessages.includes(state.protocolMessage)) {
@@ -168,43 +171,46 @@ export function createGame(canvas) {
 
         const time = Date.now() * 0.002;
         const proximity = Math.max(0, 1 - distanceFromQ / 260);
+        const entryRatio = Math.min(1, state.thresholdEntryCharge / 120);
 
         const baseRadius = 42 + Math.sin(time) * 4;
-        const outerRadius = 78 + Math.sin(time * 0.7) * 8 + proximity * 18;
+        const outerRadius = 78 + Math.sin(time * 0.7) * 8 + proximity * 18 + entryRatio * 18;
 
         ctx.save();
 
         /*
-         * Threshold Presence v1.
+         * Threshold Entry v1.
          *
-         * This is not yet an entrance.
-         * It is a visible signal that the ritual pattern has been recognized.
-         *
-         * Q can approach it, but no transfer / Null Chamber is triggered yet.
+         * The Threshold is still not a full portal.
+         * Q can now stabilize it by remaining close enough.
          */
 
-        ctx.globalAlpha = 0.12 + proximity * 0.18;
+        ctx.globalAlpha = 0.12 + proximity * 0.18 + entryRatio * 0.16;
         ctx.strokeStyle = "rgba(255, 235, 180, 0.75)";
         ctx.lineWidth = 1.2;
-        ctx.shadowBlur = 22 + proximity * 18;
+        ctx.shadowBlur = 22 + proximity * 18 + entryRatio * 24;
         ctx.shadowColor = "#ffe7b4";
 
         ctx.beginPath();
         ctx.arc(thresholdX, thresholdY, outerRadius, 0, Math.PI * 2);
         ctx.stroke();
 
-        ctx.globalAlpha = 0.22 + proximity * 0.28;
-        ctx.strokeStyle = "rgba(255, 170, 51, 0.85)";
-        ctx.lineWidth = 1.5;
+        ctx.globalAlpha = 0.22 + proximity * 0.28 + entryRatio * 0.18;
+        ctx.strokeStyle = state.thresholdEntered
+            ? "rgba(191, 250, 255, 0.95)"
+            : "rgba(255, 170, 51, 0.85)";
+        ctx.lineWidth = 1.5 + entryRatio;
 
         ctx.beginPath();
         ctx.arc(thresholdX, thresholdY, baseRadius, 0, Math.PI * 2);
         ctx.stroke();
 
         ctx.globalAlpha = 0.45 + proximity * 0.35;
-        ctx.fillStyle = "rgba(255, 235, 180, 0.95)";
-        ctx.shadowBlur = 16 + proximity * 12;
-        ctx.shadowColor = "#ffe7b4";
+        ctx.fillStyle = state.thresholdEntered
+            ? "rgba(191, 250, 255, 0.95)"
+            : "rgba(255, 235, 180, 0.95)";
+        ctx.shadowBlur = 16 + proximity * 12 + entryRatio * 20;
+        ctx.shadowColor = state.thresholdEntered ? "#bffaff" : "#ffe7b4";
         ctx.font = "bold 26px monospace";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
@@ -212,7 +218,7 @@ export function createGame(canvas) {
         ctx.fillText(">>>", thresholdX, thresholdY);
 
         if (proximity > 0.25) {
-            ctx.globalAlpha = proximity * 0.35;
+            ctx.globalAlpha = proximity * 0.35 + entryRatio * 0.25;
             ctx.strokeStyle = "rgba(191, 250, 255, 0.85)";
             ctx.lineWidth = 1;
 
@@ -222,17 +228,81 @@ export function createGame(canvas) {
             ctx.stroke();
         }
 
-        if (proximity > 0.65) {
+        if (!state.thresholdEntered && proximity > 0.65) {
             ctx.globalAlpha = 0.7;
             ctx.fillStyle = "rgba(255, 235, 180, 0.95)";
             ctx.font = "12px monospace";
             ctx.fillText("SIGNAL STABLE", thresholdX, thresholdY + outerRadius + 24);
         }
 
+        if (!state.thresholdEntered && entryRatio > 0.05) {
+            ctx.globalAlpha = 0.65;
+            ctx.strokeStyle = "rgba(191, 250, 255, 0.85)";
+            ctx.lineWidth = 2;
+
+            ctx.beginPath();
+            ctx.arc(
+                thresholdX,
+                thresholdY,
+                outerRadius + 14,
+                -Math.PI / 2,
+                -Math.PI / 2 + Math.PI * 2 * entryRatio
+            );
+            ctx.stroke();
+        }
+
+        if (state.thresholdEntered) {
+            ctx.globalAlpha = 0.82;
+            ctx.fillStyle = "rgba(191, 250, 255, 0.95)";
+            ctx.font = "12px monospace";
+            ctx.fillText("TRANSFER ACCEPTED", thresholdX, thresholdY + outerRadius + 24);
+        }
+
         ctx.restore();
 
         ctx.textAlign = "left";
         ctx.textBaseline = "alphabetic";
+    }
+
+    function updateThresholdEntry() {
+        if (!state.thresholdDetected) return;
+        if (state.thresholdEntered) return;
+        if (state.paused) return;
+
+        const thresholdX = canvas.width / 2;
+        const thresholdY = canvas.height / 2;
+        const distanceFromQ = Math.hypot(q.x - thresholdX, q.y - thresholdY);
+
+        const entryRadius = 82;
+        const maxCharge = 120;
+
+        if (distanceFromQ <= entryRadius) {
+            state.thresholdEntryCharge = Math.min(
+                maxCharge,
+                state.thresholdEntryCharge + 1
+            );
+
+            if (state.thresholdEntryCharge === 1) {
+                state.protocolMessage = "SIGNAL LOCK";
+                state.protocolMessageTimer = 80;
+            }
+
+            if (state.thresholdEntryCharge >= maxCharge) {
+                state.thresholdEntered = true;
+                state.protocolMessage = "TRANSFER ACCEPTED";
+                state.protocolMessageTimer = 180;
+                state.objectiveText = "AWAITING NULL FIELD";
+
+                console.log("THRESHOLD ENTERED - transfer accepted");
+            }
+
+            return;
+        }
+
+        state.thresholdEntryCharge = Math.max(
+            0,
+            state.thresholdEntryCharge - 2
+        );
     }
 
     function drawStartOverlay() {
@@ -392,6 +462,7 @@ export function createGame(canvas) {
 
         checkCollection(q, fragments, state, observer);
         checkCycleComplete(fragments, state, observer, spawnFragments);
+        updateThresholdEntry();
 
         if (!observer.emerged && !observer.emerging) {
             triggerObserverEmergence(observer);

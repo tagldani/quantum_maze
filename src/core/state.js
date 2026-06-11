@@ -65,7 +65,21 @@ export function createGameState() {
          * trigger the Null Chamber. It only marks Cycle 3 as special.
          */
         thresholdDetected: false,
-        thresholdSignalShown: false
+        thresholdSignalShown: false,
+
+        /*
+         * Threshold Entry v1.
+         *
+         * thresholdEntryCharge grows while Q remains close to the
+         * detected Threshold.
+         *
+         * thresholdEntered becomes true once Q has stabilized the
+         * signal long enough.
+         *
+         * This does not enter the Null Chamber yet.
+         */
+        thresholdEntryCharge: 0,
+        thresholdEntered: false
     };
 }
 

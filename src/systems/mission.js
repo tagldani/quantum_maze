@@ -100,6 +100,9 @@ function shouldDetectThreshold(state) {
 function triggerThresholdDetected(state, observer) {
   state.thresholdDetected = true;
   state.thresholdSignalShown = true;
+  state.thresholdEntryCharge = 0;
+  state.thresholdEntered = false;
+
   state.protocolMessage = "THRESHOLD DETECTED";
   state.protocolMessageTimer = 180;
   state.objectiveText = "APPROACH THE SIGNAL";
@@ -108,7 +111,7 @@ function triggerThresholdDetected(state, observer) {
     triggerObserverSignal(observer, ">>>", 220);
   }
 
-  console.log("THRESHOLD DETECTED — Cycle 1 and Cycle 2 aligned");
+  console.log("THRESHOLD DETECTED - Cycle 1 and Cycle 2 aligned");
 }
 
 function startNextCycle(fragments, state, observer, spawnFragments, nextCycle) {
@@ -154,21 +157,36 @@ function triggerFailedTransferLoop(fragments, state, observer, spawnFragments) {
 
     setTimeout(() => {
       /*
-       * Failed Transfer Loop v1.
+       * Failed Transfer Loop.
        *
-       * The player completed Cycle 3/3, but the Threshold
-       * is not open yet. The system rejects the transfer and
-       * sends Q back to Cycle 1.
+       * The player completed Cycle 3/3, but Q did not stabilize
+       * the Threshold. The system rejects the transfer and sends
+       * Q back to Cycle 1.
        *
-       * For now, ritual memory is preserved in ritualPatternResults
-       * and completedCycleSequences.
+       * Ritual memory is preserved in ritualPatternResults and
+       * completedCycleSequences for now.
        */
       state.thresholdDetected = false;
       state.thresholdSignalShown = false;
+      state.thresholdEntryCharge = 0;
+      state.thresholdEntered = false;
 
       startNextCycle(fragments, state, observer, spawnFragments, 1);
     }, 900);
   }, 1000);
+}
+
+function acceptTransfer(state, observer) {
+  state.protocolMessage = "TRANSFER ACCEPTED";
+  state.protocolMessageTimer = 220;
+  state.objectiveText = "NULL FIELD PENDING";
+  state.cycleTransitioning = false;
+
+  if (observer) {
+    triggerObserverSignal(observer, ">>>", 220);
+  }
+
+  console.log("TRANSFER ACCEPTED - Null Chamber pending");
 }
 
 export function checkCycleComplete(fragments, state, observer, spawnFragments) {
@@ -197,12 +215,13 @@ export function checkCycleComplete(fragments, state, observer, spawnFragments) {
   /*
    * Cycle 3/3 completed.
    *
-   * Until Threshold Entry exists, every full run still ends in
-   * a failed transfer and loops back to Cycle 1.
-   *
-   * Important:
-   * Threshold Detection v1 only detects the threshold at the start
-   * of Cycle 3. It does not yet let Q enter it.
+   * If Q has stabilized the Threshold, the system accepts the
+   * transfer. The actual Null Chamber is not implemented yet.
    */
+  if (state.thresholdEntered) {
+    acceptTransfer(state, observer);
+    return;
+  }
+
   triggerFailedTransferLoop(fragments, state, observer, spawnFragments);
-}
+} 
