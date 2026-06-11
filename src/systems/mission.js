@@ -1,4 +1,4 @@
-import { triggerObserverEmergence } from "../entities/observer.js";
+import { triggerObserverSignal } from "../entities/observer.js";
 
 const REQUIRED_FRAGMENTS_PER_CYCLE = 5;
 
@@ -37,7 +37,18 @@ function storeCompletedCycleSequence(state) {
   return completedSequence;
 }
 
-function evaluateRitualPattern(state, completedSequence) {
+function triggerRitualObserverFeedback(observer, isAligned) {
+  if (!observer) return;
+
+  if (isAligned) {
+    triggerObserverSignal(observer, ">>>", 150);
+    return;
+  }
+
+  triggerObserverSignal(observer, ">-. .", 110);
+}
+
+function evaluateRitualPattern(state, observer, completedSequence) {
   if (!completedSequence) return;
   if (!state.thresholdSequence) return;
   if (!state.ritualPatternResults) return;
@@ -61,6 +72,8 @@ function evaluateRitualPattern(state, completedSequence) {
     state.ritualPatternResults
   );
 
+  triggerRitualObserverFeedback(observer, isAligned);
+
   if (isAligned) {
     state.protocolMessage = "RITUAL PATTERN ALIGNED";
     state.protocolMessageTimer = 140;
@@ -81,7 +94,7 @@ export function checkCycleComplete(fragments, state, observer, spawnFragments) {
   state.cycleTransitioning = true;
 
   const completedSequence = storeCompletedCycleSequence(state);
-  evaluateRitualPattern(state, completedSequence);
+  evaluateRitualPattern(state, observer, completedSequence);
 
   if (state.cycleCount < state.maxCycles) {
     const nextCycle = state.cycleCount + 1;
