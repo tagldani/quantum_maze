@@ -85,7 +85,10 @@ nullChamberFormingShown: false,
 nullChamberNucleiCharge: 0,
 nullChamberNucleiVisible: false,
 nullChamberNucleusPreview: null,
-nullChamberNucleusPreviewIntensity: 0
+nullChamberNucleusPreviewIntensity: 0,
+nullChamberOsmosisTarget: null,
+nullChamberOsmosisCharge: 0,
+nullChamberOsmosisComplete: false
     };
 }
 
