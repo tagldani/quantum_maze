@@ -439,7 +439,64 @@ function drawNullFieldAtmosphere() {
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
 }
+function drawNullChamberArrival() {
+    if (!state.nullChamberEntered) return;
 
+    /*
+     * Null Chamber Arrival State v1.
+     *
+     * Not a room yet.
+     * Not a portal.
+     * A quiet organized void after the Still Point accepts Q.
+     */
+
+    const time = Date.now() * 0.001;
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const pulse = 0.5 + Math.sin(time * 0.8) * 0.5;
+
+    ctx.save();
+
+    // Quiet central field
+    ctx.globalAlpha = 0.08 + pulse * 0.04;
+    ctx.strokeStyle = "rgba(191, 250, 255, 0.9)";
+    ctx.lineWidth = 1;
+    ctx.shadowBlur = 18;
+    ctx.shadowColor = "#bffaff";
+
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 96 + pulse * 4, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Still horizontal axis
+    ctx.globalAlpha = 0.10 + pulse * 0.04;
+    ctx.beginPath();
+    ctx.moveTo(centerX - 150, centerY);
+    ctx.lineTo(centerX + 150, centerY);
+    ctx.stroke();
+
+    // Still vertical axis
+    ctx.globalAlpha = 0.07 + pulse * 0.03;
+    ctx.beginPath();
+    ctx.moveTo(centerX, centerY - 120);
+    ctx.lineTo(centerX, centerY + 120);
+    ctx.stroke();
+
+    // Minimal chamber signal
+    ctx.globalAlpha = 0.34 + pulse * 0.08;
+    ctx.fillStyle = "rgba(191, 250, 255, 0.95)";
+    ctx.font = "11px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = "#bffaff";
+    ctx.fillText("STILL", centerX, centerY + 132);
+
+    ctx.restore();
+
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+}
     function updateThresholdEntry() {
         if (!state.thresholdDetected) return;
         if (state.thresholdEntered) return;
@@ -525,6 +582,7 @@ function drawNullFieldAtmosphere() {
 drawResonance();
 drawThresholdPresence();
 drawNullFieldAtmosphere();
+drawNullChamberArrival();
 drawObserver(ctx, observer, q, state);
 drawQ(ctx, q, state);
 
