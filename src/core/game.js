@@ -522,18 +522,20 @@ function drawNullChamberArrival() {
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
     const pulse = 0.5 + Math.sin(time * 0.8) * 0.5;
-
+const holdConfirmed = state.nullChamberHoldConfirmed;
+const chamberAlphaBoost = holdConfirmed ? 0.08 : 0;
+const chamberRadiusBoost = holdConfirmed ? 18 : 0;
     ctx.save();
 
     // Quiet central field
-    ctx.globalAlpha = 0.08 + pulse * 0.04;
+   
     ctx.strokeStyle = "rgba(191, 250, 255, 0.9)";
     ctx.lineWidth = 1;
     ctx.shadowBlur = 18;
     ctx.shadowColor = "#bffaff";
 
     ctx.beginPath();
-    ctx.arc(centerX, centerY, 96 + pulse * 4, 0, Math.PI * 2);
+    ctx.arc(centerX, centerY, 96 + chamberRadiusBoost + pulse * 4, 0, Math.PI * 2);
     ctx.stroke();
 
     // Still horizontal axis
@@ -559,7 +561,11 @@ function drawNullChamberArrival() {
     ctx.shadowBlur = 12;
     ctx.shadowColor = "#bffaff";
     ctx.fillText("STILL", centerX, centerY + 132);
-
+if (holdConfirmed) {
+    ctx.globalAlpha = 0.26 + pulse * 0.08;
+    ctx.font = "10px monospace";
+    ctx.fillText("FORMING", centerX, centerY + 154);
+}
     ctx.restore();
 
     ctx.textAlign = "left";
