@@ -274,6 +274,65 @@ export function createGame(canvas) {
         ctx.textBaseline = "alphabetic";
     }
 
+function drawNullFieldAtmosphere() {
+    if (!state.nullFieldActive) return;
+
+    const time = Date.now() * 0.0015;
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+
+    ctx.save();
+
+    /*
+     * Null Field Atmosphere Light v1.
+     *
+     * No portal.
+     * No heavy overlay.
+     * No central object.
+     * Just a quiet atmospheric response after the loop is broken.
+     */
+
+    const pulse = 0.5 + Math.sin(time * 1.4) * 0.5;
+
+    // Very light peripheral breathing lines
+    ctx.globalAlpha = 0.08 + pulse * 0.05;
+    ctx.strokeStyle = "rgba(191, 250, 255, 0.85)";
+    ctx.lineWidth = 1;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = "#bffaff";
+
+    ctx.beginPath();
+    ctx.moveTo(40, centerY - 120);
+    ctx.lineTo(40, centerY + 120);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(canvas.width - 40, centerY - 120);
+    ctx.lineTo(canvas.width - 40, centerY + 120);
+    ctx.stroke();
+
+    // Subtle inverted signal, small and non-portal-like
+    ctx.globalAlpha = 0.22 + pulse * 0.12;
+    ctx.fillStyle = "rgba(191, 250, 255, 0.95)";
+    ctx.font = "14px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = "#bffaff";
+
+    ctx.fillText("<<<", centerX, centerY + 92);
+
+    // Tiny field hint
+    ctx.globalAlpha = 0.18 + pulse * 0.08;
+    ctx.font = "10px monospace";
+    ctx.fillText("FIELD LISTENING", centerX, centerY + 116);
+
+    ctx.restore();
+
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+}
+
     function updateThresholdEntry() {
         if (!state.thresholdDetected) return;
         if (state.thresholdEntered) return;
@@ -356,10 +415,11 @@ export function createGame(canvas) {
         }
 
         drawFragments(ctx, fragments, q);
-        drawResonance();
-        drawThresholdPresence();
-        drawObserver(ctx, observer, q, state);
-        drawQ(ctx, q, state);
+drawResonance();
+drawThresholdPresence();
+drawNullFieldAtmosphere();
+drawObserver(ctx, observer, q, state);
+drawQ(ctx, q, state);
 
         ctx.restore();
     }
