@@ -76,7 +76,8 @@ nullFieldTimer: 0,
  * and a still point can become available.
  */
 nullChamberAvailable: false,
-nullChamberEntered: false
+nullChamberEntered: false,
+stillPointCharge: 0
     };
 }
 
