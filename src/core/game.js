@@ -60,7 +60,8 @@ state.nullChamberEntered = false;
 state.stillPointCharge = 0;
 state.nullChamberHoldCharge = 0;
 state.nullChamberHoldConfirmed = false;
-
+state.nullChamberFormingCharge = 0;
+state.nullChamberFormingShown = false;
         q.x = canvas.width / 2;
         q.y = canvas.height / 2;
         q.targetX = canvas.width / 2;
@@ -333,6 +334,30 @@ function updateNullChamberHoldResponse() {
         0,
         state.nullChamberHoldCharge - 2
     );
+}
+function updateNullChamberFormingSignal() {
+    if (!state.nullChamberEntered) return;
+    if (!state.nullChamberHoldConfirmed) return;
+    if (state.nullChamberFormingShown) return;
+    if (state.paused) return;
+
+    /*
+     * Null Chamber Forming Signal v1.
+     *
+     * After CENTER HOLDS, the chamber begins to prepare something.
+     * No nuclei yet.
+     * Only a protocol shift.
+     */
+
+    state.nullChamberFormingCharge++;
+
+    if (state.nullChamberFormingCharge >= 150) {
+        state.nullChamberFormingShown = true;
+        state.protocolMessage = "FORMING";
+        state.protocolMessageTimer = 999999;
+        state.objectiveText = "BE STILL";
+        console.log("FORMING");
+    }
 }
   function drawThresholdPresence() {
         if (!state.thresholdDetected) return;
@@ -787,6 +812,7 @@ function drawMainHUD(blink) {
         updateQ(q);
 updateNullChamberStillness();
 updateNullChamberHoldResponse();
+updateNullChamberFormingSignal();
 
        if (state.memoryTraceTriggered && !state.nullFieldActive) {
             if (state.echoTimer <= 0 && Math.random() < 0.0008) {

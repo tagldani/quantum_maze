@@ -79,7 +79,9 @@ nullChamberAvailable: false,
 nullChamberEntered: false,
 stillPointCharge: 0,
 nullChamberHoldCharge: 0,
-nullChamberHoldConfirmed: false
+nullChamberHoldConfirmed: false,
+nullChamberFormingCharge: 0,
+nullChamberFormingShown: false
     };
 }
 
