@@ -66,7 +66,17 @@ export function createGameState() {
          * It does not trigger Null Chamber yet.
          */
         nullFieldActive: false,
-        nullFieldTimer: 0
+nullFieldTimer: 0,
+
+/*
+ * Null Chamber State v1.
+ *
+ * The Null Chamber is not visible yet.
+ * This only marks that the field has finished listening
+ * and a still point can become available.
+ */
+nullChamberAvailable: false,
+nullChamberEntered: false
     };
 }
 

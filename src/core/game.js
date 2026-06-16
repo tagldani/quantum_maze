@@ -53,6 +53,10 @@ export function createGame(canvas) {
         state.thresholdSignalShown = false;
         state.thresholdEntryCharge = 0;
         state.thresholdEntered = false;
+        state.nullFieldActive = false;
+state.nullFieldTimer = 0;
+state.nullChamberAvailable = false;
+state.nullChamberEntered = false;
 
         q.x = canvas.width / 2;
         q.y = canvas.height / 2;
@@ -161,7 +165,6 @@ export function createGame(canvas) {
             state.protocolMessage = "";
         }
     }
-
 function updateNullFieldListening() {
     if (!state.nullFieldActive) return;
     if (state.paused) return;
@@ -176,28 +179,38 @@ function updateNullFieldListening() {
 
     state.nullFieldTimer++;
 
-    if (state.nullFieldTimer === 180) {
-        state.protocolMessage = "FIELD LISTENING";
+    if (state.nullFieldTimer >= 1020) {
+        if (!state.nullChamberAvailable) {
+            console.log("NULL CHAMBER AVAILABLE");
+        }
+
+        state.nullChamberAvailable = true;
+        state.protocolMessage = "NULL CHAMBER AVAILABLE";
         state.protocolMessageTimer = 999999;
-        state.objectiveText = "LISTEN TO THE FIELD";
-        console.log("NULL FIELD: FIELD LISTENING");
+        state.objectiveText = "APPROACH THE STILL POINT";
+        return;
     }
 
-    if (state.nullFieldTimer === 420) {
-        state.protocolMessage = "SIGNAL INVERTED";
-        state.protocolMessageTimer = 999999;
-        state.objectiveText = "STAY WITH THE SIGNAL";
-        console.log("NULL FIELD: SIGNAL INVERTED");
-    }
-
-    if (state.nullFieldTimer === 720) {
+    if (state.nullFieldTimer >= 720) {
         state.protocolMessage = "TRACE NO LONGER RETURNS";
         state.protocolMessageTimer = 999999;
         state.objectiveText = "WAIT";
-        console.log("NULL FIELD: TRACE NO LONGER RETURNS");
+        return;
+    }
+
+    if (state.nullFieldTimer >= 420) {
+        state.protocolMessage = "SIGNAL INVERTED";
+        state.protocolMessageTimer = 999999;
+        state.objectiveText = "STAY WITH THE SIGNAL";
+        return;
+    }
+
+    if (state.nullFieldTimer >= 180) {
+        state.protocolMessage = "FIELD LISTENING";
+        state.protocolMessageTimer = 999999;
+        state.objectiveText = "LISTEN TO THE FIELD";
     }
 }
-
 
   function drawThresholdPresence() {
         if (!state.thresholdDetected) return;
@@ -555,7 +568,7 @@ drawQ(ctx, q, state);
 
         updateQ(q);
 
-        if (state.memoryTraceTriggered) {
+       if (state.memoryTraceTriggered && !state.nullFieldActive) {
             if (state.echoTimer <= 0 && Math.random() < 0.0008) {
                 state.protocolMessage = "ECHO PRESENT";
                 state.protocolMessageTimer = 120;
