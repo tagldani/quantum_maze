@@ -694,46 +694,55 @@ if (holdConfirmed) {
 
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
-}
-function drawNullChamberNuclei() {
+}function drawNullChamberNuclei() {
     if (!state.nullChamberNucleiVisible) return;
 
     /*
-     * Three Nuclei Appearance v1.
+     * Nuclei Presence Upgrade v1.
      *
-     * Visible only.
-     * Proximity preview may intensify one nucleus,
-     * but still creates no selection state.
+     * The nuclei are now visually significant.
+     * Still no selection.
+     * Still no osmosis.
+     * Proximity preview only increases presence.
      */
 
     const time = Date.now() * 0.001;
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
-    const pulse = 0.5 + Math.sin(time * 1.2) * 0.5;
+
+    const amberPulse = 0.5 + Math.sin(time * 1.65) * 0.5;
+    const cyanPulse = 0.5 + Math.sin(time * 0.95 + 1.4) * 0.5;
+    const greenPulse = 0.5 + Math.sin(time * 1.15 + 2.7) * 0.5;
 
     const nuclei = [
         {
             id: "amber",
-            x: centerX - 135,
-            y: centerY - 95,
-            radius: 13 + pulse * 2,
-            color: "rgba(255, 170, 51, 0.92)",
+            x: centerX - 145,
+            y: centerY - 105,
+            radius: 17 + amberPulse * 3,
+            outerRadius: 38 + amberPulse * 6,
+            color: "rgba(255, 170, 51, 0.94)",
+            softColor: "rgba(255, 170, 51, 0.42)",
             shadow: "#ffaa33"
         },
         {
             id: "cyan",
-            x: centerX + 135,
-            y: centerY - 95,
-            radius: 13 + Math.sin(time * 1.4 + 1.7) * 2,
-            color: "rgba(191, 250, 255, 0.92)",
+            x: centerX + 145,
+            y: centerY - 105,
+            radius: 17 + cyanPulse * 2.5,
+            outerRadius: 40 + cyanPulse * 4,
+            color: "rgba(191, 250, 255, 0.94)",
+            softColor: "rgba(191, 250, 255, 0.42)",
             shadow: "#bffaff"
         },
         {
             id: "green",
             x: centerX,
-            y: centerY + 120,
-            radius: 13 + Math.sin(time * 1.1 + 3.1) * 2,
-            color: "rgba(180, 255, 210, 0.88)",
+            y: centerY + 132,
+            radius: 17 + greenPulse * 2.7,
+            outerRadius: 39 + greenPulse * 5,
+            color: "rgba(180, 255, 210, 0.9)",
+            softColor: "rgba(180, 255, 210, 0.38)",
             shadow: "#7cffb4"
         }
     ];
@@ -744,44 +753,62 @@ function drawNullChamberNuclei() {
         const isPreviewed = state.nullChamberNucleusPreview === nucleus.id;
         const previewBoost = isPreviewed ? 1 : 0;
 
-        ctx.globalAlpha = 0.16 + previewBoost * 0.18;
-        ctx.strokeStyle = nucleus.color;
-        ctx.lineWidth = 1;
-        ctx.shadowBlur = 18;
+        // Connection to chamber center
+        ctx.globalAlpha = 0.22 + previewBoost * 0.24;
+        ctx.strokeStyle = nucleus.softColor;
+        ctx.lineWidth = 1 + previewBoost * 0.8;
+        ctx.shadowBlur = 8 + previewBoost * 12;
         ctx.shadowColor = nucleus.shadow;
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(nucleus.x, nucleus.y);
+        ctx.stroke();
 
+        // Outer aura
+        ctx.globalAlpha = 0.18 + previewBoost * 0.24;
+        ctx.strokeStyle = nucleus.color;
+        ctx.lineWidth = 1.2 + previewBoost * 0.8;
+        ctx.shadowBlur = 24 + previewBoost * 22;
+        ctx.shadowColor = nucleus.shadow;
         ctx.beginPath();
         ctx.arc(
             nucleus.x,
             nucleus.y,
-            nucleus.radius + 18 + previewBoost * 10,
+            nucleus.outerRadius + previewBoost * 14,
             0,
             Math.PI * 2
         );
         ctx.stroke();
 
-        ctx.globalAlpha = 0.52 + pulse * 0.18 + previewBoost * 0.22;
+        // Inner nucleus
+        ctx.globalAlpha = 0.62 + previewBoost * 0.24;
         ctx.fillStyle = nucleus.color;
-        ctx.shadowBlur = 24 + previewBoost * 18;
+        ctx.shadowBlur = 30 + previewBoost * 26;
         ctx.shadowColor = nucleus.shadow;
-
         ctx.beginPath();
         ctx.arc(
             nucleus.x,
             nucleus.y,
-            nucleus.radius + previewBoost * 4,
+            nucleus.radius + previewBoost * 5,
             0,
             Math.PI * 2
         );
         ctx.fill();
 
-        ctx.globalAlpha = 0.20 + previewBoost * 0.18;
-        ctx.strokeStyle = nucleus.color;
-        ctx.lineWidth = 0.8 + previewBoost * 0.6;
+        // Inner still point
+        ctx.globalAlpha = 0.28 + previewBoost * 0.24;
+        ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+        ctx.shadowBlur = 10 + previewBoost * 10;
+        ctx.shadowColor = nucleus.shadow;
         ctx.beginPath();
-        ctx.moveTo(centerX, centerY);
-        ctx.lineTo(nucleus.x, nucleus.y);
-        ctx.stroke();
+        ctx.arc(
+            nucleus.x,
+            nucleus.y,
+            3 + previewBoost * 1.5,
+            0,
+            Math.PI * 2
+        );
+        ctx.fill();
     });
 
     ctx.restore();
