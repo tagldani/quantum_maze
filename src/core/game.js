@@ -162,6 +162,43 @@ export function createGame(canvas) {
         }
     }
 
+function updateNullFieldListening() {
+    if (!state.nullFieldActive) return;
+    if (state.paused) return;
+
+    /*
+     * Null Field Listening State v1.
+     *
+     * The player has broken the loop.
+     * Nothing is explained.
+     * The field responds slowly through protocol messages.
+     */
+
+    state.nullFieldTimer++;
+
+    if (state.nullFieldTimer === 180) {
+        state.protocolMessage = "FIELD LISTENING";
+        state.protocolMessageTimer = 999999;
+        state.objectiveText = "LISTEN TO THE FIELD";
+        console.log("NULL FIELD: FIELD LISTENING");
+    }
+
+    if (state.nullFieldTimer === 420) {
+        state.protocolMessage = "SIGNAL INVERTED";
+        state.protocolMessageTimer = 999999;
+        state.objectiveText = "STAY WITH THE SIGNAL";
+        console.log("NULL FIELD: SIGNAL INVERTED");
+    }
+
+    if (state.nullFieldTimer === 720) {
+        state.protocolMessage = "TRACE NO LONGER RETURNS";
+        state.protocolMessageTimer = 999999;
+        state.objectiveText = "WAIT";
+        console.log("NULL FIELD: TRACE NO LONGER RETURNS");
+    }
+}
+
+
   function drawThresholdPresence() {
         if (!state.thresholdDetected) return;
         if (state.nullFieldActive) return;
@@ -539,9 +576,10 @@ drawQ(ctx, q, state);
         }
 
         updateObserver(observer, q, state);
+updateNullFieldListening();
 
-        const blink = Math.floor(Date.now() / 500) % 2 === 0;
-        updateProtocolMessages();
+const blink = Math.floor(Date.now() / 500) % 2 === 0;
+updateProtocolMessages();
 
         drawWorld();
         drawMainHUD(blink);
