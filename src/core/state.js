@@ -81,7 +81,11 @@ stillPointCharge: 0,
 nullChamberHoldCharge: 0,
 nullChamberHoldConfirmed: false,
 nullChamberFormingCharge: 0,
-nullChamberFormingShown: false
+nullChamberFormingShown: false,
+nullChamberFormingCharge: 0,
+nullChamberFormingShown: false,
+nullChamberNucleiCharge: 0,
+nullChamberNucleiVisible: false
     };
 }
 

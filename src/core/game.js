@@ -62,6 +62,8 @@ state.nullChamberHoldCharge = 0;
 state.nullChamberHoldConfirmed = false;
 state.nullChamberFormingCharge = 0;
 state.nullChamberFormingShown = false;
+state.nullChamberNucleiCharge = 0;
+state.nullChamberNucleiVisible = false;
         q.x = canvas.width / 2;
         q.y = canvas.height / 2;
         q.targetX = canvas.width / 2;
@@ -359,6 +361,30 @@ function updateNullChamberFormingSignal() {
         console.log("FORMING");
     }
 }
+function updateNullChamberNucleiAppearance() {
+    if (!state.nullChamberEntered) return;
+    if (!state.nullChamberFormingShown) return;
+    if (state.nullChamberNucleiVisible) return;
+    if (state.paused) return;
+
+    /*
+     * Three Nuclei Appearance v1.
+     *
+     * No choice.
+     * No interaction.
+     * The chamber only reveals that three signals have formed.
+     */
+
+    state.nullChamberNucleiCharge++;
+
+    if (state.nullChamberNucleiCharge >= 180) {
+        state.nullChamberNucleiVisible = true;
+        state.protocolMessage = "THREE SIGNALS FORM";
+        state.protocolMessageTimer = 999999;
+        state.objectiveText = "BE STILL";
+        console.log("THREE SIGNALS FORM");
+    }
+}
   function drawThresholdPresence() {
         if (!state.thresholdDetected) return;
         if (state.nullFieldActive) return;
@@ -596,6 +622,79 @@ if (holdConfirmed) {
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
 }
+function drawNullChamberNuclei() {
+    if (!state.nullChamberNucleiVisible) return;
+
+    /*
+     * Three Nuclei Appearance v1.
+     *
+     * Visible only.
+     * No selection state.
+     * No benefit.
+     */
+
+    const time = Date.now() * 0.001;
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const pulse = 0.5 + Math.sin(time * 1.2) * 0.5;
+
+    const nuclei = [
+        {
+            x: centerX - 135,
+            y: centerY - 95,
+            radius: 13 + pulse * 2,
+            color: "rgba(255, 170, 51, 0.92)",
+            shadow: "#ffaa33"
+        },
+        {
+            x: centerX + 135,
+            y: centerY - 95,
+            radius: 13 + Math.sin(time * 1.4 + 1.7) * 2,
+            color: "rgba(191, 250, 255, 0.92)",
+            shadow: "#bffaff"
+        },
+        {
+            x: centerX,
+            y: centerY + 120,
+            radius: 13 + Math.sin(time * 1.1 + 3.1) * 2,
+            color: "rgba(180, 255, 210, 0.88)",
+            shadow: "#7cffb4"
+        }
+    ];
+
+    ctx.save();
+
+    nuclei.forEach((nucleus) => {
+        ctx.globalAlpha = 0.16;
+        ctx.strokeStyle = nucleus.color;
+        ctx.lineWidth = 1;
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = nucleus.shadow;
+
+        ctx.beginPath();
+        ctx.arc(nucleus.x, nucleus.y, nucleus.radius + 18, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.globalAlpha = 0.52 + pulse * 0.18;
+        ctx.fillStyle = nucleus.color;
+        ctx.shadowBlur = 24;
+        ctx.shadowColor = nucleus.shadow;
+
+        ctx.beginPath();
+        ctx.arc(nucleus.x, nucleus.y, nucleus.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.globalAlpha = 0.20;
+        ctx.strokeStyle = nucleus.color;
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(nucleus.x, nucleus.y);
+        ctx.stroke();
+    });
+
+    ctx.restore();
+}
     function updateThresholdEntry() {
         if (!state.thresholdDetected) return;
         if (state.thresholdEntered) return;
@@ -682,6 +781,7 @@ drawResonance();
 drawThresholdPresence();
 drawNullFieldAtmosphere();
 drawNullChamberArrival();
+drawNullChamberNuclei();
 drawObserver(ctx, observer, q, state);
 drawQ(ctx, q, state);
 
@@ -809,10 +909,11 @@ function drawMainHUD(blink) {
             return;
         }
 
-        updateQ(q);
+       updateQ(q);
 updateNullChamberStillness();
 updateNullChamberHoldResponse();
 updateNullChamberFormingSignal();
+updateNullChamberNucleiAppearance();
 
        if (state.memoryTraceTriggered && !state.nullFieldActive) {
             if (state.echoTimer <= 0 && Math.random() < 0.0008) {
