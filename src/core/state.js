@@ -82,10 +82,9 @@ nullChamberHoldCharge: 0,
 nullChamberHoldConfirmed: false,
 nullChamberFormingCharge: 0,
 nullChamberFormingShown: false,
-nullChamberFormingCharge: 0,
-nullChamberFormingShown: false,
 nullChamberNucleiCharge: 0,
-nullChamberNucleiVisible: false
+nullChamberNucleiVisible: false,
+nullChamberNucleusPreview: null
     };
 }
 

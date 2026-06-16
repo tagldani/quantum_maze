@@ -64,6 +64,7 @@ state.nullChamberFormingCharge = 0;
 state.nullChamberFormingShown = false;
 state.nullChamberNucleiCharge = 0;
 state.nullChamberNucleiVisible = false;
+state.nullChamberNucleusPreview = null;
         q.x = canvas.width / 2;
         q.y = canvas.height / 2;
         q.targetX = canvas.width / 2;
@@ -290,7 +291,7 @@ function updateNullChamberStillness() {
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
 
-    const pullStrength = 0.012;
+    const pullStrength = state.nullChamberNucleiVisible ? 0.008 : 0.012;
 
     q.targetX += (centerX - q.targetX) * pullStrength;
     q.targetY += (centerY - q.targetY) * pullStrength;
@@ -383,6 +384,78 @@ function updateNullChamberNucleiAppearance() {
         state.protocolMessageTimer = 999999;
         state.objectiveText = "BE STILL";
         console.log("THREE SIGNALS FORM");
+    }
+}
+function updateNullChamberNucleusPreview() {
+    if (!state.nullChamberNucleiVisible) return;
+    if (state.paused) return;
+
+    /*
+     * Nuclei Proximity Preview v1.
+     *
+     * No selection.
+     * No lock.
+     * No reward.
+     * The chamber only lets each nucleus respond to proximity.
+     */
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+
+    const nuclei = [
+    {
+        id: "amber",
+        x: centerX - 135,
+        y: centerY - 95,
+        message: "UNSTABLE NEAR"
+    },
+    {
+        id: "cyan",
+        x: centerX + 135,
+        y: centerY - 95,
+        message: "FIELD NEAR"
+    },
+    {
+        id: "green",
+        x: centerX,
+        y: centerY + 120,
+        message: "TRACE NEAR"
+    }
+];
+
+    const previewRadius = 92;
+
+    let nearest = null;
+    let nearestDistance = Infinity;
+
+    nuclei.forEach((nucleus) => {
+        const isPreviewed = state.nullChamberNucleusPreview === nucleus.id;
+const previewBoost = isPreviewed ? 1 : 0;
+        const distance = Math.hypot(q.x - nucleus.x, q.y - nucleus.y);
+
+        if (distance < nearestDistance) {
+            nearest = {
+                ...nucleus,
+                distance
+            };
+            nearestDistance = distance;
+        }
+    });
+
+    if (nearest && nearest.distance <= previewRadius) {
+        state.nullChamberNucleusPreview = nearest.id;
+        state.protocolMessage = nearest.message;
+        state.protocolMessageTimer = 999999;
+        state.objectiveText = "LISTEN";
+        return;
+    }
+
+    state.nullChamberNucleusPreview = null;
+
+    if (state.nullChamberNucleiVisible) {
+        state.protocolMessage = "THREE SIGNALS FORM";
+        state.protocolMessageTimer = 999999;
+        state.objectiveText = "BE STILL";
     }
 }
   function drawThresholdPresence() {
@@ -629,8 +702,8 @@ function drawNullChamberNuclei() {
      * Three Nuclei Appearance v1.
      *
      * Visible only.
-     * No selection state.
-     * No benefit.
+     * Proximity preview may intensify one nucleus,
+     * but still creates no selection state.
      */
 
     const time = Date.now() * 0.001;
@@ -640,6 +713,7 @@ function drawNullChamberNuclei() {
 
     const nuclei = [
         {
+            id: "amber",
             x: centerX - 135,
             y: centerY - 95,
             radius: 13 + pulse * 2,
@@ -647,6 +721,7 @@ function drawNullChamberNuclei() {
             shadow: "#ffaa33"
         },
         {
+            id: "cyan",
             x: centerX + 135,
             y: centerY - 95,
             radius: 13 + Math.sin(time * 1.4 + 1.7) * 2,
@@ -654,6 +729,7 @@ function drawNullChamberNuclei() {
             shadow: "#bffaff"
         },
         {
+            id: "green",
             x: centerX,
             y: centerY + 120,
             radius: 13 + Math.sin(time * 1.1 + 3.1) * 2,
@@ -665,28 +741,43 @@ function drawNullChamberNuclei() {
     ctx.save();
 
     nuclei.forEach((nucleus) => {
-        ctx.globalAlpha = 0.16;
+        const isPreviewed = state.nullChamberNucleusPreview === nucleus.id;
+        const previewBoost = isPreviewed ? 1 : 0;
+
+        ctx.globalAlpha = 0.16 + previewBoost * 0.18;
         ctx.strokeStyle = nucleus.color;
         ctx.lineWidth = 1;
         ctx.shadowBlur = 18;
         ctx.shadowColor = nucleus.shadow;
 
         ctx.beginPath();
-        ctx.arc(nucleus.x, nucleus.y, nucleus.radius + 18, 0, Math.PI * 2);
+        ctx.arc(
+            nucleus.x,
+            nucleus.y,
+            nucleus.radius + 18 + previewBoost * 10,
+            0,
+            Math.PI * 2
+        );
         ctx.stroke();
 
-        ctx.globalAlpha = 0.52 + pulse * 0.18;
+        ctx.globalAlpha = 0.52 + pulse * 0.18 + previewBoost * 0.22;
         ctx.fillStyle = nucleus.color;
-        ctx.shadowBlur = 24;
+        ctx.shadowBlur = 24 + previewBoost * 18;
         ctx.shadowColor = nucleus.shadow;
 
         ctx.beginPath();
-        ctx.arc(nucleus.x, nucleus.y, nucleus.radius, 0, Math.PI * 2);
+        ctx.arc(
+            nucleus.x,
+            nucleus.y,
+            nucleus.radius + previewBoost * 4,
+            0,
+            Math.PI * 2
+        );
         ctx.fill();
 
-        ctx.globalAlpha = 0.20;
+        ctx.globalAlpha = 0.20 + previewBoost * 0.18;
         ctx.strokeStyle = nucleus.color;
-        ctx.lineWidth = 0.8;
+        ctx.lineWidth = 0.8 + previewBoost * 0.6;
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
         ctx.lineTo(nucleus.x, nucleus.y);
@@ -909,11 +1000,12 @@ function drawMainHUD(blink) {
             return;
         }
 
-       updateQ(q);
+      updateQ(q);
 updateNullChamberStillness();
 updateNullChamberHoldResponse();
 updateNullChamberFormingSignal();
 updateNullChamberNucleiAppearance();
+updateNullChamberNucleusPreview();
 
        if (state.memoryTraceTriggered && !state.nullFieldActive) {
             if (state.echoTimer <= 0 && Math.random() < 0.0008) {
