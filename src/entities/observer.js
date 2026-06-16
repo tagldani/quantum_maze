@@ -37,6 +37,7 @@ export function triggerObserverSignal(observer, text, duration = 70) {
 
 export function triggerObserverDesync(observer, state) {
     if (observer.reactionCooldown > 0) return;
+    if (state.nullFieldActive) return;
 
     observer.desyncTimer = 45;
     observer.reactionCooldown = 180;
@@ -119,7 +120,7 @@ export function updateObserver(observer, q, state) {
     if (observer.emerged) {
         const distanceFromQ = Math.hypot(q.x - observer.x, q.y - observer.y);
 
-        if (distanceFromQ < 70) {
+        if (!state.nullFieldActive && distanceFromQ < 70) {
             triggerObserverDesync(observer, state);
         }
 
@@ -130,7 +131,12 @@ export function updateObserver(observer, q, state) {
         let strength;
         let minDistance;
 
-        if (cycle <= 1) {
+        if (state.nullFieldActive) {
+            desiredX = q.x + 190 + Math.sin(observer.driftAngle * 0.7) * 35;
+            desiredY = q.y - 120 + Math.cos(observer.driftAngle * 0.6) * 28;
+            strength = 0.01;
+            minDistance = 160;
+        } else if (cycle <= 1) {
             desiredX = 90 + Math.sin(observer.driftAngle) * 22;
             desiredY = window.innerHeight - 190 + Math.cos(observer.driftAngle * 0.8) * 18;
             strength = 0.012;
@@ -173,7 +179,7 @@ export function drawObserver(ctx, observer, q, state) {
 
     ctx.save();
 
-    ctx.shadowBlur = cycle >= 3 ? 22 : 14;
+    ctx.shadowBlur = cycle >= 3 || state.nullFieldActive ? 22 : 14;
 
     let displayText = ">...";
     let fillColor = `rgba(255, 170, 51, ${alpha})`;
@@ -187,12 +193,20 @@ export function drawObserver(ctx, observer, q, state) {
      * >-. .  desync / error
      * >>.    active interference
      * >>>    full presence / threshold
+     * <<<    inverted witness / Null Field
      *
-     * Fragment reactions can temporarily override the normal cycle symbol.
-     * This prepares the ritual language without implementing the full sequence yet.
+     * Null Field has priority over cycle logic.
      */
 
-    if (observer.signalText) {
+    if (
+        state.nullFieldActive ||
+        state.protocolMessage === "NULL FIELD" ||
+        state.objectiveText === "LISTEN TO THE FIELD"
+    ) {
+        displayText = "<<<";
+        fillColor = `rgba(191, 250, 255, ${alpha})`;
+        shadowColor = "#bffaff";
+    } else if (observer.signalText) {
         displayText = observer.signalText;
 
         if (observer.signalText === ">-. .") {
@@ -204,6 +218,9 @@ export function drawObserver(ctx, observer, q, state) {
         } else if (observer.signalText === ">>>") {
             fillColor = `rgba(255, 235, 180, ${alpha})`;
             shadowColor = "#ffe7b4";
+        } else if (observer.signalText === "<<<") {
+            fillColor = `rgba(191, 250, 255, ${alpha})`;
+            shadowColor = "#bffaff";
         } else {
             fillColor = `rgba(255, 170, 51, ${alpha})`;
             shadowColor = "#ffaa33";
@@ -233,7 +250,7 @@ export function drawObserver(ctx, observer, q, state) {
 
     ctx.fillStyle = fillColor;
     ctx.shadowColor = shadowColor;
-    ctx.font = cycle >= 3 ? "28px monospace" : "26px monospace";
+    ctx.font = cycle >= 3 || state.nullFieldActive ? "28px monospace" : "26px monospace";
 
     ctx.fillText(displayText, observer.x, observer.y);
 

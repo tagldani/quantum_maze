@@ -142,38 +142,45 @@ function startNextCycle(fragments, state, observer, spawnFragments, nextCycle) {
   state.cycleTransitioning = false;
 }
 
-function activateNullField(state, observer) {
-  if (state.nullFieldActive) return;
-
+function acceptTransfer(state, observer) {
+  /*
+   * Transfer accepted.
+   *
+   * Important:
+   * nullFieldActive is activated immediately so Observer rendering
+   * can switch from >>> to <<< without waiting for the delayed
+   * NULL FIELD message.
+   */
   state.nullFieldActive = true;
   state.nullFieldTimer = 1;
-  state.protocolMessage = "NULL FIELD";
-  state.protocolMessageTimer = 240;
-  state.objectiveText = "LISTEN TO THE FIELD";
-  state.cycleTransitioning = false;
 
-  if (observer) {
-    triggerObserverSignal(observer, "<<<", 260);
-  }
-
-  console.log("NULL FIELD ACTIVE");
-}
-
-function acceptTransfer(state, observer) {
   state.protocolMessage = "TRANSFER ACCEPTED";
   state.protocolMessageTimer = 220;
   state.objectiveText = "NULL FIELD PENDING";
   state.cycleTransitioning = false;
 
   if (observer) {
-    triggerObserverSignal(observer, ">>>", 220);
+    triggerObserverSignal(observer, "<<<", 999999);
   }
 
-  console.log("TRANSFER ACCEPTED - preparing Null Field");
+  console.log("TRANSFER ACCEPTED - Null Field activated", {
+    nullFieldActive: state.nullFieldActive,
+    observerSignal: observer?.signalText
+  });
 
   setTimeout(() => {
-    if (!state.thresholdEntered) return;
-    activateNullField(state, observer);
+    state.protocolMessage = "NULL FIELD";
+    state.protocolMessageTimer = 999999;
+    state.objectiveText = "LISTEN TO THE FIELD";
+
+    if (observer) {
+      triggerObserverSignal(observer, "<<<", 999999);
+    }
+
+    console.log("NULL FIELD ACTIVE", {
+      nullFieldActive: state.nullFieldActive,
+      observerSignal: observer?.signalText
+    });
   }, 1200);
 }
 

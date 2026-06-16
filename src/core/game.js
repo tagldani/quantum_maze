@@ -162,8 +162,9 @@ export function createGame(canvas) {
         }
     }
 
-    function drawThresholdPresence() {
+  function drawThresholdPresence() {
         if (!state.thresholdDetected) return;
+        if (state.nullFieldActive) return;
 
         const thresholdX = canvas.width / 2;
         const thresholdY = canvas.height / 2;
@@ -215,7 +216,11 @@ export function createGame(canvas) {
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
-        ctx.fillText(">>>", thresholdX, thresholdY);
+    ctx.fillText(
+    state.nullFieldActive || state.thresholdEntered ? "<<<" : ">>>",
+    thresholdX,
+    thresholdY
+);
 
         if (proximity > 0.25) {
             ctx.globalAlpha = proximity * 0.35 + entryRatio * 0.25;
@@ -251,12 +256,17 @@ export function createGame(canvas) {
             ctx.stroke();
         }
 
-        if (state.thresholdEntered) {
-            ctx.globalAlpha = 0.82;
-            ctx.fillStyle = "rgba(191, 250, 255, 0.95)";
-            ctx.font = "12px monospace";
-            ctx.fillText("TRANSFER ACCEPTED", thresholdX, thresholdY + outerRadius + 24);
-        }
+      if (state.nullFieldActive) {
+    ctx.globalAlpha = 0.82;
+    ctx.fillStyle = "rgba(191, 250, 255, 0.95)";
+    ctx.font = "12px monospace";
+    ctx.fillText("NULL FIELD", thresholdX, thresholdY + outerRadius + 24);
+} else if (state.thresholdEntered) {
+    ctx.globalAlpha = 0.82;
+    ctx.fillStyle = "rgba(191, 250, 255, 0.95)";
+    ctx.font = "12px monospace";
+    ctx.fillText("TRANSFER ACCEPTED", thresholdX, thresholdY + outerRadius + 24);
+}
 
         ctx.restore();
 
