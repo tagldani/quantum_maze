@@ -269,6 +269,29 @@ function updateStillPointInteraction() {
         state.stillPointCharge - 2
     );
 }
+function updateNullChamberStillness() {
+    if (!state.nullChamberEntered) return;
+    if (state.paused) return;
+
+    /*
+     * Null Chamber Stillness Lock v1.
+     *
+     * Not a hard movement block.
+     * The chamber softly recalls Q toward the center.
+     * Movement becomes possible, but narratively irrelevant.
+     */
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+
+    const pullStrength = 0.012;
+
+    q.targetX += (centerX - q.targetX) * pullStrength;
+    q.targetY += (centerY - q.targetY) * pullStrength;
+
+    q.x += (centerX - q.x) * pullStrength * 0.35;
+    q.y += (centerY - q.y) * pullStrength * 0.35;
+}
   function drawThresholdPresence() {
         if (!state.thresholdDetected) return;
         if (state.nullFieldActive) return;
@@ -714,6 +737,7 @@ function drawMainHUD(blink) {
         }
 
         updateQ(q);
+updateNullChamberStillness();
 
        if (state.memoryTraceTriggered && !state.nullFieldActive) {
             if (state.echoTimer <= 0 && Math.random() < 0.0008) {
