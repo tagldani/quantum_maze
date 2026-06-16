@@ -69,6 +69,8 @@ state.nullChamberNucleusPreviewIntensity = 0;
 state.nullChamberOsmosisTarget = null;
 state.nullChamberOsmosisCharge = 0;
 state.nullChamberOsmosisComplete = false;
+state.nullChamberChosenNucleus = null;
+state.nullChamberSelectionComplete = false;
         q.x = canvas.width / 2;
         q.y = canvas.height / 2;
         q.targetX = canvas.width / 2;
@@ -393,6 +395,11 @@ function updateNullChamberNucleiAppearance() {
 function updateNullChamberNucleusPreview() {
     if (!state.nullChamberNucleiVisible) return;
     if (state.paused) return;
+    if (state.nullChamberSelectionComplete) {
+    state.nullChamberNucleusPreview = state.nullChamberChosenNucleus;
+    state.nullChamberNucleusPreviewIntensity = 1;
+    return;
+}
 
     /*
      * Nuclei Proximity Preview v1.
@@ -433,8 +440,14 @@ function updateNullChamberNucleusPreview() {
     let nearestDistance = Infinity;
 
     nuclei.forEach((nucleus) => {
-        const isPreviewed = state.nullChamberNucleusPreview === nucleus.id;
+      const isPreviewed = state.nullChamberNucleusPreview === nucleus.id;
+const isChosen = state.nullChamberChosenNucleus === nucleus.id;
+const selectionComplete = state.nullChamberSelectionComplete;
+
 const previewBoost = isPreviewed ? 1 : 0;
+const selectionBoost = isChosen && selectionComplete ? 1 : 0;
+const fadeOther = selectionComplete && !isChosen ? 0.28 : 1;
+
 const isOsmosisTarget = state.nullChamberOsmosisTarget === nucleus.id;
 const osmosisRatio = isOsmosisTarget
     ? Math.max(0, Math.min(1, state.nullChamberOsmosisCharge / 180))
@@ -553,7 +566,7 @@ function updateNullChamberSonicPreview() {
 function updateNullChamberOsmosis() {
     if (!state.nullChamberNucleiVisible) return;
     if (state.paused) return;
-    if (state.nullChamberOsmosisComplete) return;
+    if (state.nullChamberSelectionComplete) return;
 
     /*
      * Osmosis Charge v1.
@@ -586,10 +599,12 @@ function updateNullChamberOsmosis() {
 
         if (state.nullChamberOsmosisCharge >= requiredOsmosisCharge) {
             state.nullChamberOsmosisComplete = true;
-            state.protocolMessage = "OSMOSIS";
+            state.nullChamberChosenNucleus = state.nullChamberOsmosisTarget;
+            state.nullChamberSelectionComplete = true;
+            state.protocolMessage = "ONE ANSWER";
             state.protocolMessageTimer = 999999;
             state.objectiveText = "REMAIN";
-            console.log("OSMOSIS COMPLETE", state.nullChamberOsmosisTarget);
+            console.log("ONE ANSWER", state.nullChamberChosenNucleus);
         }
 
         return;
@@ -845,11 +860,12 @@ function drawNullChamberNuclei() {
     if (!state.nullChamberNucleiVisible) return;
 
     /*
-     * Nuclei Presence Upgrade v1 + Osmosis visual ring.
+     * Nuclei Presence Upgrade v1 + Osmosis + First Answer visual state.
      *
-     * The nuclei are visually significant.
      * Proximity preview increases presence.
-     * Osmosis charge draws a partial ring around the active nucleus.
+     * Osmosis charge draws a partial ring.
+     * After ONE ANSWER, the chosen nucleus remains dominant
+     * and the other two fade.
      */
 
     const time = Date.now() * 0.001;
@@ -897,18 +913,25 @@ function drawNullChamberNuclei() {
 
     nuclei.forEach((nucleus) => {
         const isPreviewed = state.nullChamberNucleusPreview === nucleus.id;
+        const isChosen = state.nullChamberChosenNucleus === nucleus.id;
+        const selectionComplete = state.nullChamberSelectionComplete;
+
         const previewBoost = isPreviewed ? 1 : 0;
+        const selectionBoost = isChosen && selectionComplete ? 1 : 0;
+        const fadeOther = selectionComplete && !isChosen ? 0.28 : 1;
 
         const isOsmosisTarget = state.nullChamberOsmosisTarget === nucleus.id;
         const osmosisRatio = isOsmosisTarget
             ? Math.max(0, Math.min(1, state.nullChamberOsmosisCharge / 180))
             : 0;
 
+        const activeRatio = Math.max(osmosisRatio, selectionBoost);
+
         // Connection to chamber center
-        ctx.globalAlpha = 0.22 + previewBoost * 0.24;
+        ctx.globalAlpha = (0.22 + previewBoost * 0.24 + selectionBoost * 0.18) * fadeOther;
         ctx.strokeStyle = nucleus.softColor;
-        ctx.lineWidth = 1 + previewBoost * 0.8;
-        ctx.shadowBlur = 8 + previewBoost * 12;
+        ctx.lineWidth = 1 + previewBoost * 0.8 + selectionBoost * 0.8;
+        ctx.shadowBlur = 8 + previewBoost * 12 + selectionBoost * 12;
         ctx.shadowColor = nucleus.shadow;
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
@@ -916,27 +939,27 @@ function drawNullChamberNuclei() {
         ctx.stroke();
 
         // Outer aura
-        ctx.globalAlpha = 0.18 + previewBoost * 0.24;
+        ctx.globalAlpha = (0.18 + previewBoost * 0.24 + selectionBoost * 0.20) * fadeOther;
         ctx.strokeStyle = nucleus.color;
-        ctx.lineWidth = 1.2 + previewBoost * 0.8;
-        ctx.shadowBlur = 24 + previewBoost * 22;
+        ctx.lineWidth = 1.2 + previewBoost * 0.8 + selectionBoost * 0.8;
+        ctx.shadowBlur = 24 + previewBoost * 22 + selectionBoost * 22;
         ctx.shadowColor = nucleus.shadow;
         ctx.beginPath();
         ctx.arc(
             nucleus.x,
             nucleus.y,
-            nucleus.outerRadius + previewBoost * 14,
+            nucleus.outerRadius + previewBoost * 14 + selectionBoost * 16,
             0,
             Math.PI * 2
         );
         ctx.stroke();
 
-        // Osmosis charge ring
-        if (osmosisRatio > 0) {
-            ctx.globalAlpha = 0.22 + osmosisRatio * 0.48;
+        // Osmosis / selected answer ring
+        if (activeRatio > 0) {
+            ctx.globalAlpha = 0.22 + activeRatio * 0.48;
             ctx.strokeStyle = nucleus.color;
-            ctx.lineWidth = 2 + osmosisRatio * 2;
-            ctx.shadowBlur = 28 + osmosisRatio * 30;
+            ctx.lineWidth = 2 + activeRatio * 2;
+            ctx.shadowBlur = 28 + activeRatio * 30;
             ctx.shadowColor = nucleus.shadow;
 
             ctx.beginPath();
@@ -945,36 +968,36 @@ function drawNullChamberNuclei() {
                 nucleus.y,
                 nucleus.outerRadius + 22,
                 -Math.PI / 2,
-                -Math.PI / 2 + Math.PI * 2 * osmosisRatio
+                -Math.PI / 2 + Math.PI * 2 * activeRatio
             );
             ctx.stroke();
         }
 
         // Inner nucleus
-        ctx.globalAlpha = 0.62 + previewBoost * 0.24;
+        ctx.globalAlpha = (0.62 + previewBoost * 0.24 + selectionBoost * 0.24) * fadeOther;
         ctx.fillStyle = nucleus.color;
-        ctx.shadowBlur = 30 + previewBoost * 26;
+        ctx.shadowBlur = 30 + previewBoost * 26 + selectionBoost * 26;
         ctx.shadowColor = nucleus.shadow;
         ctx.beginPath();
         ctx.arc(
             nucleus.x,
             nucleus.y,
-            nucleus.radius + previewBoost * 5,
+            nucleus.radius + previewBoost * 5 + selectionBoost * 5,
             0,
             Math.PI * 2
         );
         ctx.fill();
 
         // Inner still point
-        ctx.globalAlpha = 0.28 + previewBoost * 0.24;
+        ctx.globalAlpha = (0.28 + previewBoost * 0.24 + selectionBoost * 0.24) * fadeOther;
         ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
-        ctx.shadowBlur = 10 + previewBoost * 10;
+        ctx.shadowBlur = 10 + previewBoost * 10 + selectionBoost * 10;
         ctx.shadowColor = nucleus.shadow;
         ctx.beginPath();
         ctx.arc(
             nucleus.x,
             nucleus.y,
-            3 + previewBoost * 1.5,
+            3 + previewBoost * 1.5 + selectionBoost * 1.5,
             0,
             Math.PI * 2
         );
@@ -982,7 +1005,8 @@ function drawNullChamberNuclei() {
     });
 
     ctx.restore();
-}    function updateThresholdEntry() {
+}    
+function updateThresholdEntry() {
         if (!state.thresholdDetected) return;
         if (state.thresholdEntered) return;
         if (state.paused) return;

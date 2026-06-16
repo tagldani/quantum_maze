@@ -88,7 +88,9 @@ nullChamberNucleusPreview: null,
 nullChamberNucleusPreviewIntensity: 0,
 nullChamberOsmosisTarget: null,
 nullChamberOsmosisCharge: 0,
-nullChamberOsmosisComplete: false
+nullChamberOsmosisComplete: false,
+nullChamberChosenNucleus: null,
+nullChamberSelectionComplete: false
     };
 }
 
