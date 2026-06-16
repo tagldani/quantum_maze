@@ -77,7 +77,9 @@ nullFieldTimer: 0,
  */
 nullChamberAvailable: false,
 nullChamberEntered: false,
-stillPointCharge: 0
+stillPointCharge: 0,
+nullChamberHoldCharge: 0,
+nullChamberHoldConfirmed: false
     };
 }
 

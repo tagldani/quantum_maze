@@ -1,0 +1,42 @@
+[1mdiff --git a/src/core/game.js b/src/core/game.js[m
+[1mindex 7636d08..de5eaab 100644[m
+[1m--- a/src/core/game.js[m
+[1m+++ b/src/core/game.js[m
+[36m@@ -268,6 +268,29 @@[m [mfunction updateStillPointInteraction() {[m
+         0,[m
+         state.stillPointCharge - 2[m
+     );[m
+[32m+[m[32m}[m
+[32m+[m[32mfunction updateNullChamberStillness() {[m
+[32m+[m[32m    if (!state.nullChamberEntered) return;[m
+[32m+[m[32m    if (state.paused) return;[m
+[32m+[m
+[32m+[m[32m    /*[m
+[32m+[m[32m     * Null Chamber Stillness Lock v1.[m
+[32m+[m[32m     *[m
+[32m+[m[32m     * Not a hard movement block.[m
+[32m+[m[32m     * The chamber softly recalls Q toward the center.[m
+[32m+[m[32m     * Movement becomes possible, but narratively irrelevant.[m
+[32m+[m[32m     */[m
+[32m+[m
+[32m+[m[32m    const centerX = canvas.width / 2;[m
+[32m+[m[32m    const centerY = canvas.height / 2;[m
+[32m+[m
+[32m+[m[32m    const pullStrength = 0.012;[m
+[32m+[m
+[32m+[m[32m    q.targetX += (centerX - q.targetX) * pullStrength;[m
+[32m+[m[32m    q.targetY += (centerY - q.targetY) * pullStrength;[m
+[32m+[m
+[32m+[m[32m    q.x += (centerX - q.x) * pullStrength * 0.35;[m
+[32m+[m[32m    q.y += (centerY - q.y) * pullStrength * 0.35;[m
+ }[m
+   function drawThresholdPresence() {[m
+         if (!state.thresholdDetected) return;[m
+[36m@@ -714,6 +737,7 @@[m [mfunction drawMainHUD(blink) {[m
+         }[m
+ [m
+         updateQ(q);[m
+[32m+[m[32mupdateNullChamberStillness();[m
+ [m
+        if (state.memoryTraceTriggered && !state.nullFieldActive) {[m
+             if (state.echoTimer <= 0 && Math.random() < 0.0008) {[m

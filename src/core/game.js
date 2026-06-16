@@ -57,6 +57,9 @@ export function createGame(canvas) {
 state.nullFieldTimer = 0;
 state.nullChamberAvailable = false;
 state.nullChamberEntered = false;
+state.stillPointCharge = 0;
+state.nullChamberHoldCharge = 0;
+state.nullChamberHoldConfirmed = false;
 
         q.x = canvas.width / 2;
         q.y = canvas.height / 2;
@@ -291,6 +294,45 @@ function updateNullChamberStillness() {
 
     q.x += (centerX - q.x) * pullStrength * 0.35;
     q.y += (centerY - q.y) * pullStrength * 0.35;
+}
+function updateNullChamberHoldResponse() {
+    if (!state.nullChamberEntered) return;
+    if (state.paused) return;
+    if (state.nullChamberHoldConfirmed) return;
+
+    /*
+     * Null Chamber Hold Response v1.
+     *
+     * No reward.
+     * No explanation.
+     * The chamber simply acknowledges sustained stillness.
+     */
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const distanceFromQ = Math.hypot(q.x - centerX, q.y - centerY);
+
+    const holdRadius = 70;
+    const requiredHold = 180;
+
+    if (distanceFromQ <= holdRadius) {
+        state.nullChamberHoldCharge++;
+
+        if (state.nullChamberHoldCharge >= requiredHold) {
+            state.nullChamberHoldConfirmed = true;
+            state.protocolMessage = "CENTER HOLDS";
+            state.protocolMessageTimer = 999999;
+            state.objectiveText = "BE STILL";
+            console.log("CENTER HOLDS");
+        }
+
+        return;
+    }
+
+    state.nullChamberHoldCharge = Math.max(
+        0,
+        state.nullChamberHoldCharge - 2
+    );
 }
   function drawThresholdPresence() {
         if (!state.thresholdDetected) return;
@@ -738,6 +780,7 @@ function drawMainHUD(blink) {
 
         updateQ(q);
 updateNullChamberStillness();
+updateNullChamberHoldResponse();
 
        if (state.memoryTraceTriggered && !state.nullFieldActive) {
             if (state.echoTimer <= 0 && Math.random() < 0.0008) {
