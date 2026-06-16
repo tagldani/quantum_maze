@@ -588,34 +588,63 @@ drawQ(ctx, q, state);
 
         ctx.restore();
     }
-
-    function drawMainHUD(blink) {
+function drawMainHUD(blink) {
+    if (state.nullChamberEntered) {
         drawText(`Q ${state.quantumScore}`, 20, 40, 24, "#bffaff");
-        drawText("R E S O N A N C E", 20, 70, 12, "rgba(191, 250, 255, 0.75)");
-        drawDashedLine(20, 58, 150, "#00d4ff");
-        drawText(`CYCLE ${state.cycleCount}/${state.maxCycles}`, 20, 95, 18, "#ffaa33");
-        drawText("TRACE STATUS: ACTIVE", 20, 125, 12, "rgba(255, 170, 51, 0.8)");
+        drawText("N U L L   C H A M B E R", 20, 70, 12, "rgba(191, 250, 255, 0.75)");
+        drawDashedLine(20, 58, 190, "#00d4ff");
+
+        drawText("CYCLE: NULL", 20, 95, 18, "#ffaa33");
+        drawText("TRACE STATUS: SUSPENDED", 20, 125, 12, "rgba(255, 170, 51, 0.8)");
         drawDashedLine(20, 115, 260, "#ffaa33");
+
         drawText("OBJECTIVE:", 20, 155, 16, "#bffaff");
-        drawText(`> ${state.objectiveText}${blink ? "_" : ""}`, 20, 190, 20, "#00d4ff");
+        drawText(`> ${state.objectiveText || "BE STILL"}${blink ? "_" : ""}`, 20, 190, 20, "#00d4ff");
 
         if (state.protocolMessage) {
             drawDashedLine(20, canvas.height - 140, canvas.width - 40, "#ffaa33");
             drawText(state.protocolMessage, 40, canvas.height - 100, 20, "#ffaa33");
 
-            if (!observer.emerged && !observer.emerging) {
-                drawText(
-                    `> ${state.protocolMessage === "TRANSFER DENIED" ? "TRANSFER DENIED" : "..."}${blink ? "_" : ""}`,
-                    40,
-                    canvas.height - 60,
-                    26,
-                    "#ffaa33"
-                );
-            }
+            drawText(
+                `> <<<${blink ? "_" : ""}`,
+                40,
+                canvas.height - 60,
+                26,
+                "#ffaa33"
+            );
 
             drawDashedLine(20, canvas.height - 35, canvas.width - 40, "#ffaa33");
         }
+
+        return;
     }
+
+    drawText(`Q ${state.quantumScore}`, 20, 40, 24, "#bffaff");
+    drawText("R E S O N A N C E", 20, 70, 12, "rgba(191, 250, 255, 0.75)");
+    drawDashedLine(20, 58, 150, "#00d4ff");
+    drawText(`CYCLE ${state.cycleCount}/${state.maxCycles}`, 20, 95, 18, "#ffaa33");
+    drawText("TRACE STATUS: ACTIVE", 20, 125, 12, "rgba(255, 170, 51, 0.8)");
+    drawDashedLine(20, 115, 260, "#ffaa33");
+    drawText("OBJECTIVE:", 20, 155, 16, "#bffaff");
+    drawText(`> ${state.objectiveText}${blink ? "_" : ""}`, 20, 190, 20, "#00d4ff");
+
+    if (state.protocolMessage) {
+        drawDashedLine(20, canvas.height - 140, canvas.width - 40, "#ffaa33");
+        drawText(state.protocolMessage, 40, canvas.height - 100, 20, "#ffaa33");
+
+        if (!observer.emerged && !observer.emerging) {
+            drawText(
+                `> ${state.protocolMessage === "TRANSFER DENIED" ? "TRANSFER DENIED" : "..."}${blink ? "_" : ""}`,
+                40,
+                canvas.height - 60,
+                26,
+                "#ffaa33"
+            );
+        }
+
+        drawDashedLine(20, canvas.height - 35, canvas.width - 40, "#ffaa33");
+    }
+}
 
     function drawPauseOverlay() {
         ctx.fillStyle = "rgba(2, 6, 23, 0.78)";
@@ -717,6 +746,25 @@ updateProtocolMessages();
     }
 
     function drawHUD() {
+            if (state.nullChamberEntered) {
+        const startX = canvas.width - 220;
+
+        ctx.font = "16px monospace";
+        ctx.fillStyle = "#bffaff";
+        ctx.fillText("Field:", startX, 40);
+
+        ctx.font = "14px monospace";
+        ctx.fillStyle = "rgba(191, 250, 255, 0.75)";
+        ctx.fillText("silent", startX, 70);
+        ctx.fillText("movement irrelevant", startX, 95);
+        ctx.fillText("remain", startX, 120);
+
+        ctx.fillStyle = "rgba(255,255,255,0.45)";
+        ctx.font = "12px monospace";
+        ctx.fillText("Press SPACE to Pause", startX, canvas.height - 30);
+
+        return;
+    }
         const counts = fragments.reduce((acc, f) => {
             if (f.collected) return acc;
             acc[f.type] = (acc[f.type] || 0) + 1;
