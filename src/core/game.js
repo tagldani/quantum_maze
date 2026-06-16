@@ -405,21 +405,21 @@ function updateNullChamberNucleusPreview() {
     const nuclei = [
     {
         id: "amber",
-        x: centerX - 135,
-        y: centerY - 95,
-        message: "UNSTABLE NEAR"
+        x: centerX - 145,
+        y: centerY - 105,
+        message: "AMBER BREATHES"
     },
     {
         id: "cyan",
-        x: centerX + 135,
-        y: centerY - 95,
-        message: "FIELD NEAR"
+        x: centerX + 145,
+        y: centerY - 105,
+        message: "FIELD BALANCE"
     },
     {
         id: "green",
         x: centerX,
-        y: centerY + 120,
-        message: "TRACE NEAR"
+        y: centerY + 132,
+        message: "TRACE REMEMBER"
     }
 ];
 
