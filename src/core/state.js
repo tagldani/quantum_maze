@@ -84,7 +84,8 @@ nullChamberFormingCharge: 0,
 nullChamberFormingShown: false,
 nullChamberNucleiCharge: 0,
 nullChamberNucleiVisible: false,
-nullChamberNucleusPreview: null
+nullChamberNucleusPreview: null,
+nullChamberNucleusPreviewIntensity: 0
     };
 }
 

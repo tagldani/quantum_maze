@@ -12,7 +12,7 @@ export function createGame(canvas) {
     const q = createQ();
     const observer = createObserver();
     const fragments = createFragments();
-
+let nullChamberAudio = null;
     function resize() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -65,6 +65,7 @@ state.nullChamberFormingShown = false;
 state.nullChamberNucleiCharge = 0;
 state.nullChamberNucleiVisible = false;
 state.nullChamberNucleusPreview = null;
+state.nullChamberNucleusPreviewIntensity = 0;
         q.x = canvas.width / 2;
         q.y = canvas.height / 2;
         q.targetX = canvas.width / 2;
@@ -443,20 +444,104 @@ const previewBoost = isPreviewed ? 1 : 0;
     });
 
     if (nearest && nearest.distance <= previewRadius) {
-        state.nullChamberNucleusPreview = nearest.id;
-        state.protocolMessage = nearest.message;
-        state.protocolMessageTimer = 999999;
-        state.objectiveText = "LISTEN";
-        return;
-    }
+    state.nullChamberNucleusPreview = nearest.id;
+    state.nullChamberNucleusPreviewIntensity = Math.max(
+        0,
+        Math.min(1, 1 - nearest.distance / previewRadius)
+    );
+    state.protocolMessage = nearest.message;
+    state.protocolMessageTimer = 999999;
+    state.objectiveText = "LISTEN";
+    return;
+}
 
-    state.nullChamberNucleusPreview = null;
+state.nullChamberNucleusPreview = null;
+state.nullChamberNucleusPreviewIntensity = 0;
 
     if (state.nullChamberNucleiVisible) {
         state.protocolMessage = "THREE SIGNALS FORM";
         state.protocolMessageTimer = 999999;
         state.objectiveText = "BE STILL";
     }
+}
+function updateNullChamberSonicPreview() {
+    if (!state.nullChamberNucleiVisible) return;
+
+    /*
+     * Nuclei Sonic Preview v1.
+     *
+     * Low-volume procedural audio.
+     * No external files.
+     * No selection.
+     * Each nucleus has a different tone identity.
+     */
+
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    if (!nullChamberAudio) {
+        const audioContext = new AudioContextClass();
+        const masterGain = audioContext.createGain();
+
+        masterGain.gain.value = 0.025;
+        masterGain.connect(audioContext.destination);
+
+        const voices = {};
+
+        const voiceDefs = {
+            amber: {
+                frequency: 86,
+                type: "sawtooth"
+            },
+            cyan: {
+                frequency: 392,
+                type: "sine"
+            },
+            green: {
+                frequency: 196,
+                type: "triangle"
+            }
+        };
+
+        Object.entries(voiceDefs).forEach(([id, def]) => {
+            const oscillator = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+
+            oscillator.type = def.type;
+            oscillator.frequency.value = def.frequency;
+            gain.gain.value = 0;
+
+            oscillator.connect(gain);
+            gain.connect(masterGain);
+            oscillator.start();
+
+            voices[id] = {
+                oscillator,
+                gain
+            };
+        });
+
+        nullChamberAudio = {
+            audioContext,
+            masterGain,
+            voices
+        };
+    }
+
+    if (nullChamberAudio.audioContext.state === "suspended") {
+        nullChamberAudio.audioContext.resume().catch(() => {});
+    }
+
+    const now = nullChamberAudio.audioContext.currentTime;
+    const activeId = state.nullChamberNucleusPreview;
+    const intensity = state.nullChamberNucleusPreviewIntensity || 0;
+
+    Object.entries(nullChamberAudio.voices).forEach(([id, voice]) => {
+        const targetGain = id === activeId ? intensity * 0.08 : 0;
+
+        voice.gain.gain.cancelScheduledValues(now);
+        voice.gain.gain.setTargetAtTime(targetGain, now, 0.08);
+    });
 }
   function drawThresholdPresence() {
         if (!state.thresholdDetected) return;
@@ -1033,6 +1118,7 @@ updateNullChamberHoldResponse();
 updateNullChamberFormingSignal();
 updateNullChamberNucleiAppearance();
 updateNullChamberNucleusPreview();
+updateNullChamberSonicPreview();
 
        if (state.memoryTraceTriggered && !state.nullFieldActive) {
             if (state.echoTimer <= 0 && Math.random() < 0.0008) {
