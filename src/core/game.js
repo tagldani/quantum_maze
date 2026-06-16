@@ -429,10 +429,13 @@ function drawNullFieldAtmosphere() {
 
     ctx.fillText("<<<", centerX, centerY + 92);
 
-    // Tiny field hint
+    // Tiny field hint.
+// Once the Null Chamber is entered, the Field no longer labels itself.
+if (!state.nullChamberEntered) {
     ctx.globalAlpha = 0.18 + pulse * 0.08;
     ctx.font = "10px monospace";
     ctx.fillText("FIELD LISTENING", centerX, centerY + 116);
+}
 
     ctx.restore();
 
