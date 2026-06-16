@@ -170,6 +170,11 @@ function updateNullFieldListening() {
     if (state.paused) return;
 
     /*
+     * Once the Null Chamber is available, the Null Field stops speaking.
+     * From this moment the Still Point interaction owns protocol messages.
+     */
+    if (state.nullChamberAvailable || state.nullChamberEntered) return;
+    /*
      * Null Field Listening State v1.
      *
      * The player has broken the loop.
@@ -211,7 +216,59 @@ function updateNullFieldListening() {
         state.objectiveText = "LISTEN TO THE FIELD";
     }
 }
+function updateStillPointInteraction() {
+    if (!state.nullChamberAvailable) return;
+    if (state.nullChamberEntered) return;
+    if (state.paused) return;
 
+    /*
+     * Still Point Interaction v1.2.
+     *
+     * Uses the same logical center as the Threshold.
+     * The Still Point remains invisible.
+     */
+
+    const thresholdX = canvas.width / 2;
+    const thresholdY = canvas.height / 2;
+    const distanceFromQ = Math.hypot(q.x - thresholdX, q.y - thresholdY);
+
+    const stillPointRadius = 90;
+    const maxCharge = 120;
+
+    if (distanceFromQ <= stillPointRadius) {
+        state.stillPointCharge = Math.min(
+            maxCharge,
+            state.stillPointCharge + 1
+        );
+
+        if (state.stillPointCharge === 1) {
+            state.protocolMessage = "STILL POINT DETECTED";
+            state.protocolMessageTimer = 999999;
+            state.objectiveText = "HOLD POSITION";
+        }
+
+        if (state.stillPointCharge >= 60 && state.stillPointCharge < maxCharge) {
+            state.protocolMessage = "FIELD DOES NOT MOVE";
+            state.protocolMessageTimer = 999999;
+            state.objectiveText = "REMAIN";
+        }
+
+        if (state.stillPointCharge >= maxCharge) {
+            state.nullChamberEntered = true;
+            state.protocolMessage = "NULL CHAMBER ENTERED";
+            state.protocolMessageTimer = 999999;
+            state.objectiveText = "BE STILL";
+            console.log("NULL CHAMBER ENTERED");
+        }
+
+        return;
+    }
+
+    state.stillPointCharge = Math.max(
+        0,
+        state.stillPointCharge - 2
+    );
+}
   function drawThresholdPresence() {
         if (!state.thresholdDetected) return;
         if (state.nullFieldActive) return;
@@ -588,12 +645,12 @@ drawQ(ctx, q, state);
             triggerObserverEmergence(observer);
         }
 
-        updateObserver(observer, q, state);
+     updateObserver(observer, q, state);
 updateNullFieldListening();
+updateStillPointInteraction();
 
 const blink = Math.floor(Date.now() / 500) % 2 === 0;
 updateProtocolMessages();
-
         drawWorld();
         drawMainHUD(blink);
         drawHUD();
